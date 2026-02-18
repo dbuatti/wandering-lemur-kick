@@ -4,36 +4,40 @@
 
 @layer base {
   :root {
-    /* Warm Minimalist Luxury Palette */
-    --background: 40 30% 98%; /* Warm Linen #FAF9F6 */
-    --foreground: 220 40% 10%; /* Deep Ink #0D1117 */
+    /* Midnight & Azure Tech-Luxury Palette */
+    --background: 0 0% 0%; /* True Black #000000 */
+    --foreground: 0 0% 100%; /* Pure White #FFFFFF */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 40% 10%;
+    --card: 0 0% 7%; /* Very Dark Grey #121212 */
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 10%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 220 40% 10%; /* Deep Ink */
-    --primary-foreground: 40 30% 98%;
+    --primary: 210 100% 50%; /* Apple Azure #007AFF */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 20% 45%; /* Bronze/Gold Accent #8C7851 */
-    --secondary-foreground: 40 30% 98%;
+    --secondary: 240 5% 12%; /* Graphite #1D1D1F */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 2% 55%; /* Silver Grey #86868B */
 
-    --accent: 35 30% 92%; /* Soft Champagne */
-    --accent-foreground: 220 40% 10%;
+    --accent: 210 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 40 30% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 35 15% 88%;
-    --input: 35 15% 88%;
-    --ring: 35 20% 45%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 210 100% 50%;
 
-    --radius: 0.5rem; /* Sharper, more professional corners */
+    --radius: 0.75rem;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 }
 
@@ -43,17 +47,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-secondary/20;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30;
   }
 
-  /* High-contrast Serif for Headings */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif font-medium tracking-tight text-primary;
-  }
-
-  /* Clean Sans-serif for Body */
-  p, span, li, a, button {
-    @apply font-sans;
+    @apply font-sans font-bold tracking-tight text-foreground;
   }
 
   ::-webkit-scrollbar {
@@ -63,20 +61,20 @@
     @apply bg-background;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-secondary/20 rounded-full hover:bg-secondary/40 transition-colors;
+    @apply bg-muted-foreground/20 rounded-full hover:bg-primary/40 transition-colors;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm;
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl;
   }
   
   .section-padding {
-    @apply py-28 lg:py-40;
+    @apply py-24 lg:py-32;
   }
 
-  .btn-luxury {
-    @apply h-14 px-10 rounded-none font-sans font-bold uppercase tracking-widest text-xs transition-all duration-500;
+  .nav-link {
+    @apply text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-300;
   }
 }
