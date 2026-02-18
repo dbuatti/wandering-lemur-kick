@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    /* Midnight & Azure Tech-Luxury Palette */
-    --background: 0 0% 0%; /* True Black #000000 */
-    --foreground: 0 0% 100%; /* Pure White #FFFFFF */
+    /* High-Contrast Professional Palette */
+    --background: 222 47% 4%; /* Deepest Navy/Black */
+    --foreground: 210 40% 98%; /* Off-white */
 
-    --card: 0 0% 7%; /* Very Dark Grey #121212 */
-    --card-foreground: 0 0% 100%;
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 47% 7%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 210 100% 50%; /* Apple Azure #007AFF */
-    --primary-foreground: 0 0% 100%;
+    --primary: 199 89% 48%; /* Electric Cyan */
+    --primary-foreground: 222 47% 4%;
 
-    --secondary: 240 5% 12%; /* Graphite #1D1D1F */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 215 25% 27%; /* Slate Blue */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 5% 15%;
-    --muted-foreground: 240 2% 55%; /* Silver Grey #86868B */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 222 47% 4%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5% 15%;
-    --input: 240 5% 15%;
-    --ring: 210 100% 50%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 199 89% 48%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
   }
 
   html {
@@ -53,21 +53,11 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans font-bold tracking-tight text-foreground;
   }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-background;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/20 rounded-full hover:bg-primary/40 transition-colors;
-  }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   
   .section-padding {

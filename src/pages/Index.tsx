@@ -4,12 +4,11 @@ import Experience from "@/components/Experience";
 import ServiceTiers from "@/components/ServiceTiers";
 import Specialties from "@/components/Specialties";
 import AboutMe from "@/components/AboutMe";
-import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-black">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-grow">
         <Hero />
@@ -20,7 +19,6 @@ const Index = () => {
         <div id="specialties">
           <Specialties />
         </div>
-        <Testimonials />
         <div id="tiers">
           <ServiceTiers />
         </div>
