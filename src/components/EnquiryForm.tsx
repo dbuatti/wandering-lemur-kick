@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -22,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { showSuccess } from "@/utils/toast";
-import { Send } from "lucide-react";
+import { showSuccess, showError } from "@/utils/toast";
+import { Send, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -33,6 +34,8 @@ const formSchema = z.object({
 });
 
 const EnquiryForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,10 +45,23 @@ const EnquiryForm = () => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    showSuccess("Enquiry sent successfully! I'll be in touch soon.");
-    form.reset();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-enquiry', {
+        body: values,
+      });
+
+      if (error) throw error;
+
+      showSuccess("Enquiry sent successfully! I'll be in touch soon.");
+      form.reset();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      showError("Failed to send enquiry. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -122,8 +138,16 @@ const EnquiryForm = () => {
           )}
         />
 
-        <Button type="submit" className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] transition-all">
-          Send Enquiry <Send className="ml-2 h-4 w-4" />
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
+        >
+          {isSubmitting ? (
+            <>Sending... <Loader2 className="ml-2 h-4 w-4 animate-spin" /></>
+          ) : (
+            <>Send Enquiry <Send className="ml-2 h-4 w-4" /></>
+          )}
         </Button>
       </form>
     </Form>
