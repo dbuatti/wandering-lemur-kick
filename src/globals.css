@@ -4,35 +4,36 @@
 
 @layer base {
   :root {
-    --background: 30 20% 98%; /* Soft Cream/Off-White #FDFCFB */
-    --foreground: 222 47% 11%; /* Deep Navy #0A192F */
+    /* Warm Minimalist Luxury Palette */
+    --background: 40 30% 98%; /* Warm Linen #FAF9F6 */
+    --foreground: 220 40% 10%; /* Deep Ink #0D1117 */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 40% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 40% 10%;
 
-    --primary: 222 47% 11%; /* Deep Navy */
-    --primary-foreground: 30 20% 98%;
+    --primary: 220 40% 10%; /* Deep Ink */
+    --primary-foreground: 40 30% 98%;
 
-    --secondary: 215 16% 23%; /* Slate Grey */
-    --secondary-foreground: 30 20% 98%;
+    --secondary: 35 20% 45%; /* Bronze/Gold Accent #8C7851 */
+    --secondary-foreground: 40 30% 98%;
 
-    --muted: 30 10% 94%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 30 20% 94%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 35 30% 92%; /* Soft Champagne */
+    --accent-foreground: 220 40% 10%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 30 20% 98%;
+    --destructive-foreground: 40 30% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
+    --border: 35 15% 88%;
+    --input: 35 15% 88%;
+    --ring: 35 20% 45%;
 
-    --radius: 1rem;
+    --radius: 0.5rem; /* Sharper, more professional corners */
   }
 }
 
@@ -42,31 +43,40 @@
   }
 
   body {
-    @apply bg-background text-foreground font-serif antialiased selection:bg-primary/10;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-secondary/20;
   }
 
+  /* High-contrast Serif for Headings */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-bold tracking-tight text-primary;
+    @apply font-serif font-medium tracking-tight text-primary;
   }
 
-  /* Custom scrollbar for a cleaner look */
+  /* Clean Sans-serif for Body */
+  p, span, li, a, button {
+    @apply font-sans;
+  }
+
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   ::-webkit-scrollbar-track {
     @apply bg-background;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
+    @apply bg-secondary/20 rounded-full hover:bg-secondary/40 transition-colors;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm;
+    @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm;
   }
   
   .section-padding {
-    @apply py-24 lg:py-32;
+    @apply py-28 lg:py-40;
+  }
+
+  .btn-luxury {
+    @apply h-14 px-10 rounded-none font-sans font-bold uppercase tracking-widest text-xs transition-all duration-500;
   }
 }

@@ -3,43 +3,46 @@ import { ShieldCheck, Apple, Zap } from "lucide-react";
 const Experience = () => {
   const features = [
     {
-      icon: <ShieldCheck className="h-8 w-8" />,
+      icon: <ShieldCheck className="h-6 w-6" />,
       title: "Corporate Security",
-      description: "Former IT Site Manager for Multi-Office Accounting Firms. I bring institutional-grade security to your personal devices."
+      description: "Institutional-grade security protocols adapted for the private individual."
     },
     {
-      icon: <Apple className="h-8 w-8" />,
+      icon: <Apple className="h-6 w-6" />,
       title: "Apple Specialist",
-      description: "Certified expertise in the Apple ecosystem. Seamlessly syncing your iPhone, Mac, and iPad for peak performance."
+      description: "Certified expertise in creating a frictionless, unified Apple ecosystem."
     },
     {
-      icon: <Zap className="h-8 w-8" />,
+      icon: <Zap className="h-6 w-6" />,
       title: "Efficiency Consulting",
-      description: "I don't just fix tech; I optimize your life. Learn to use your tools to save 5+ hours of work every week."
+      description: "Optimizing digital workflows to reclaim hours of your professional week."
     }
   ];
 
   return (
-    <section className="section-padding bg-white">
+    <section className="section-padding bg-white border-y border-border">
       <div className="container px-4 mx-auto">
-        <div className="flex flex-col lg:flex-row justify-between items-end mb-20 gap-8">
-          <div className="max-w-2xl">
-            <h2 className="text-4xl lg:text-5xl font-sans font-extrabold mb-6 leading-tight">The Digital Handshake</h2>
-            <p className="text-xl text-muted-foreground font-serif leading-relaxed">
-              Projecting authority, security, and personal trust through years of high-end experience.
+        <div className="grid lg:grid-cols-12 gap-16 items-center mb-24">
+          <div className="lg:col-span-5">
+            <h2 className="text-4xl lg:text-6xl font-serif font-light leading-tight">
+              The Digital <br /><span className="italic text-secondary">Handshake.</span>
+            </h2>
+          </div>
+          <div className="lg:col-span-7">
+            <p className="text-xl text-muted-foreground font-sans font-light leading-relaxed">
+              I bridge the gap between professional business systems and a user-friendly personal life, projecting authority and trust through years of high-end experience.
             </p>
           </div>
-          <div className="hidden lg:block h-px flex-grow mx-12 bg-border/50 mb-6"></div>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+        <div className="grid md:grid-cols-3 border-t border-border">
           {features.map((feature, index) => (
-            <div key={index} className="group p-10 rounded-[2rem] bg-background border border-transparent hover:border-primary/5 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500">
-              <div className="mb-8 p-4 bg-primary/5 rounded-2xl inline-block text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+            <div key={index} className="p-12 lg:p-16 border-r last:border-r-0 border-border hover:bg-accent/20 transition-colors duration-500 group">
+              <div className="mb-10 text-secondary group-hover:scale-110 transition-transform duration-500">
                 {feature.icon}
               </div>
-              <h3 className="text-2xl font-sans font-bold mb-4 group-hover:translate-x-1 transition-transform duration-300">{feature.title}</h3>
-              <p className="text-muted-foreground font-serif leading-relaxed text-lg">
+              <h3 className="text-xl font-serif font-medium mb-6">{feature.title}</h3>
+              <p className="text-muted-foreground font-sans font-light leading-relaxed">
                 {feature.description}
               </p>
             </div>
