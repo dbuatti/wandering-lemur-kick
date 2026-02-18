@@ -1,5 +1,4 @@
 import { ArrowUpRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const ServiceTiers = () => {
   const tiers = [
@@ -51,7 +50,7 @@ const ServiceTiers = () => {
                 <span className="text-sm font-medium text-muted-foreground ml-2">/ hr</span>
               </div>
               
-              <ul className="space-y-5 mb-16 flex-grow">
+              <ul className="space-y-5 flex-grow">
                 {tier.features.map((feature, i) => (
                   <li key={i} className="text-sm font-light text-muted-foreground flex items-center">
                     <Check className="h-4 w-4 text-primary mr-4" />
@@ -59,10 +58,6 @@ const ServiceTiers = () => {
                   </li>
                 ))}
               </ul>
-              
-              <Button className="w-full h-14 rounded-full bg-white text-black hover:bg-primary hover:text-white transition-all duration-500 text-xs font-bold uppercase tracking-widest">
-                Select Tier
-              </Button>
             </div>
           ))}
         </div>
