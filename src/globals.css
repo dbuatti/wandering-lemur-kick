@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%; /* Off-White #F7FAFC */
+    --background: 30 20% 98%; /* Soft Cream/Off-White #FDFCFB */
     --foreground: 222 47% 11%; /* Deep Navy #0A192F */
 
     --card: 0 0% 100%;
@@ -13,56 +13,26 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 222 47% 11%; /* Deep Navy #0A192F */
-    --primary-foreground: 210 20% 98%;
+    --primary: 222 47% 11%; /* Deep Navy */
+    --primary-foreground: 30 20% 98%;
 
-    --secondary: 215 16% 23%; /* Slate Grey #2D3748 */
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 215 16% 23%; /* Slate Grey */
+    --secondary-foreground: 30 20% 98%;
 
-    --muted: 210 20% 94%;
+    --muted: 30 10% 94%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 210 20% 94%;
+    --accent: 30 20% 94%;
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 30 20% 98%;
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
 
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 20% 98%;
-
-    --card: 222 47% 11%;
-    --card-foreground: 210 20% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 20% 98%;
-
-    --primary: 210 20% 98%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 215 16% 23%;
-    --secondary-foreground: 210 20% 98%;
-
-    --muted: 215 16% 23%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 215 16% 23%;
-    --accent-foreground: 210 20% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 20% 98%;
-
-    --border: 215 16% 23%;
-    --input: 215 16% 23%;
-    --ring: 213 27% 84%;
+    --radius: 1rem;
   }
 }
 
@@ -72,10 +42,31 @@
   }
 
   body {
-    @apply bg-background text-foreground font-serif;
+    @apply bg-background text-foreground font-serif antialiased selection:bg-primary/10;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-bold tracking-tight;
+    @apply font-sans font-bold tracking-tight text-primary;
+  }
+
+  /* Custom scrollbar for a cleaner look */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+  
+  .section-padding {
+    @apply py-24 lg:py-32;
   }
 }

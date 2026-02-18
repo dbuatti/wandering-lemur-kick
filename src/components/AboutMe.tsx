@@ -1,58 +1,58 @@
 const AboutMe = () => {
   return (
-    <section className="py-24 bg-white">
+    <section className="section-padding bg-background overflow-hidden relative">
       <div className="container px-4 mx-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-sans font-bold mb-6">My Approach</h2>
-              <p className="text-lg text-muted-foreground font-serif leading-relaxed mb-6">
-                With over 6 years of experience as an IT Site Manager and Apple Specialist, I've seen how technology can either be a powerful lever or a constant source of friction.
-              </p>
-              <p className="text-lg text-muted-foreground font-serif leading-relaxed mb-8">
-                I don't just fix devices; I partner with you to build a digital environment that supports your lifestyle. Whether you're a creative professional in Toorak or a boutique business owner in Parkdale, I bring the same level of care and precision to your personal tech as I did for multi-office accounting firms.
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center font-sans font-bold text-secondary">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-12 gap-16 lg:gap-24 items-center">
+            <div className="lg:col-span-7">
+              <div className="inline-block text-xs font-bold tracking-widest uppercase text-muted-foreground mb-6">My Philosophy</div>
+              <h2 className="text-4xl lg:text-6xl font-sans font-extrabold mb-8 leading-tight">
+                Technology should be a <span className="italic font-serif font-light text-muted-foreground">lever</span>, not a friction point.
+              </h2>
+              <div className="space-y-6 text-lg lg:text-xl text-muted-foreground font-serif leading-relaxed">
+                <p>
+                  With over 6 years of experience as an IT Site Manager and Apple Specialist, I've seen how technology can either empower your craft or drain your energy.
+                </p>
+                <p>
+                  I don't just fix devices; I partner with you to build a digital environment that supports your lifestyle. Whether you're a creative professional in Toorak or a boutique business owner in Parkdale, I bring the same level of care and precision to your personal tech as I did for multi-office accounting firms.
+                </p>
+              </div>
+              
+              <div className="mt-12 flex items-center gap-6 p-6 glass-card rounded-2xl inline-flex">
+                <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center font-sans font-black text-white text-xl shadow-lg shadow-primary/20">
                   DB
                 </div>
                 <div>
-                  <div className="font-bold text-primary">Daniele Buatti</div>
-                  <div className="text-sm text-muted-foreground">Your Private IT Director</div>
+                  <div className="text-xl font-sans font-bold text-primary">Daniele Buatti</div>
+                  <div className="text-sm font-serif text-muted-foreground italic">Your Private IT Director</div>
                 </div>
               </div>
             </div>
-            <div className="bg-background p-8 rounded-3xl border border-border">
-              <h3 className="text-xl font-sans font-bold mb-6">Why Work With Me</h3>
-              <ul className="space-y-6">
-                <li className="flex gap-4">
-                  <div className="h-6 w-6 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <div className="h-2 w-2 rounded-full bg-secondary"></div>
-                  </div>
-                  <p className="font-serif text-muted-foreground">
-                    <strong className="text-primary block mb-1">Holistic Expertise</strong>
-                    Security, efficiency, and hardware diagnostics in one place.
-                  </p>
-                </li>
-                <li className="flex gap-4">
-                  <div className="h-6 w-6 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <div className="h-2 w-2 rounded-full bg-secondary"></div>
-                  </div>
-                  <p className="font-serif text-muted-foreground">
-                    <strong className="text-primary block mb-1">Results-Focused</strong>
-                    Leave every session feeling more confident and capable.
-                  </p>
-                </li>
-                <li className="flex gap-4">
-                  <div className="h-6 w-6 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <div className="h-2 w-2 rounded-full bg-secondary"></div>
-                  </div>
-                  <p className="font-serif text-muted-foreground">
-                    <strong className="text-primary block mb-1">Local & Personal</strong>
-                    Based in Melbourne, providing on-site or remote support.
-                  </p>
-                </li>
-              </ul>
+            
+            <div className="lg:col-span-5">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-primary/5 rounded-[2.5rem] blur-2xl"></div>
+                <div className="relative bg-white p-10 lg:p-12 rounded-[2.5rem] border border-border shadow-xl">
+                  <h3 className="text-2xl font-sans font-bold mb-10">Why Work With Me</h3>
+                  <ul className="space-y-10">
+                    {[
+                      { title: "Holistic Expertise", desc: "Security, efficiency, and hardware diagnostics in one place." },
+                      { title: "Results-Focused", desc: "Leave every session feeling more confident and capable." },
+                      { title: "Local & Personal", desc: "Based in Melbourne, providing on-site or remote support." }
+                    ].map((item, i) => (
+                      <li key={i} className="flex gap-6">
+                        <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-sans font-bold mb-2">{item.title}</h4>
+                          <p className="font-serif text-muted-foreground leading-relaxed">{item.desc}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
