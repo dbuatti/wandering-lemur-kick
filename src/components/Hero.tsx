@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail } from "lucide-react";
 import ContactDialog from "./ContactDialog";
+import BookingDialog from "./BookingDialog";
 
 const Hero = () => {
   return (
@@ -23,11 +24,11 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <ContactDialog>
+            <BookingDialog>
               <Button className="h-16 px-12 rounded-full bg-primary text-white hover:bg-primary/90 hover:scale-105 transition-all duration-300 text-sm font-bold">
                 Book Consultation <ArrowRight className="ml-3 h-4 w-4" />
               </Button>
-            </ContactDialog>
+            </BookingDialog>
             
             <ContactDialog>
               <Button 

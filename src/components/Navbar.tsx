@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import ContactDialog from "./ContactDialog";
+import BookingDialog from "./BookingDialog";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,11 +24,11 @@ const Navbar = () => {
           <a href="#experience" className="nav-link">Experience</a>
           <a href="#specialties" className="nav-link">Specialties</a>
           <a href="#tiers" className="nav-link">Investment</a>
-          <ContactDialog>
+          <BookingDialog>
             <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest">
               Book Now
             </Button>
-          </ContactDialog>
+          </BookingDialog>
         </div>
       </div>
     </nav>
