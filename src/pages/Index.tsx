@@ -1,7 +1,7 @@
 import Hero from "@/components/Hero";
-import PersonalPositioning from "@/components/PersonalPositioning";
-import WhoIWorkWith from "@/components/WhoIWorkWith";
+import Experience from "@/components/Experience";
 import ServiceTiers from "@/components/ServiceTiers";
+import Specialties from "@/components/Specialties";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -9,8 +9,8 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow">
         <Hero />
-        <PersonalPositioning />
-        <WhoIWorkWith />
+        <Experience />
+        <Specialties />
         <ServiceTiers />
       </main>
       <Footer />

@@ -5,27 +5,24 @@ const ServiceTiers = () => {
   const tiers = [
     {
       id: "01",
-      name: "System Reset",
-      description: "A calm, structured session to restore clarity and performance to your digital life.",
-      rate: "$110",
-      bestFor: "Creatives who want clarity without overwhelm.",
-      features: ["iCloud Cleanups", "Digital De-cluttering", "File Reorganisation", "Performance Tuning"]
+      name: "Tech Concierge",
+      description: "Software 'How-to', iCloud cleanups, and performance tuning.",
+      rate: "$100",
+      features: ["iCloud Optimization", "Software Training", "Performance Tuning", "Email Setup"]
     },
     {
       id: "02",
-      name: "Workflow Architecture",
-      description: "For those who want their digital systems to match the level of their professional output.",
-      rate: "$140",
-      bestFor: "Business owners and high-impact professionals.",
-      features: ["Workflow Optimisation", "Security Hardening", "Profile Separation", "Privacy Audits"]
+      name: "Efficiency Partner",
+      description: "Workflow audits, security hardening, and business profile separation.",
+      rate: "$130",
+      features: ["Workflow Audits", "Security Hardening", "Profile Separation", "Privacy Audits"]
     },
     {
       id: "03",
-      name: "Deep Repair & Recovery",
-      description: "When something has failed—and needs precise, careful, and high-trust intervention.",
-      rate: "$160",
-      bestFor: "Critical hardware or data recovery needs.",
-      features: ["Hardware Diagnostics", "Component Replacement", "Data Recovery", "Custom System Builds"]
+      name: "Hardware Surgery",
+      description: "Deep-dive diagnostics, hardware repairs, and custom system builds.",
+      rate: "$150",
+      features: ["Hardware Diagnostics", "Component Repairs", "Custom Builds", "Data Recovery"]
     }
   ];
 
@@ -43,7 +40,6 @@ const ServiceTiers = () => {
             <div key={tier.id} className="relative p-8 rounded-3xl bg-white border border-border shadow-sm hover:shadow-md transition-all flex flex-col">
               <div className="text-sm font-bold text-secondary mb-4">TIER {tier.id}</div>
               <h3 className="text-2xl font-sans font-bold mb-2">{tier.name}</h3>
-              <p className="text-sm text-secondary font-bold mb-4 italic">Best for: {tier.bestFor}</p>
               <p className="text-muted-foreground font-serif mb-6 flex-grow">{tier.description}</p>
               <div className="mb-8">
                 <span className="text-4xl font-sans font-extrabold text-primary">{tier.rate}</span>
@@ -57,7 +53,7 @@ const ServiceTiers = () => {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full rounded-full py-6">Book This Tier</Button>
+              <Button className="w-full rounded-full py-6">Select Tier</Button>
             </div>
           ))}
         </div>
