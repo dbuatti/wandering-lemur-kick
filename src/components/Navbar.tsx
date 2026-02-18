@@ -26,7 +26,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Security", href: "#security" },
-    { name: "Clean Sweep™", href: "#clean-sweep" },
+    { name: "Clean Sweep", href: "#clean-sweep" },
     { name: "Tiers", href: "#tiers" },
     { name: "Contact", href: "#contact" },
   ];

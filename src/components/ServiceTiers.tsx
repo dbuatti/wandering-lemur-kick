@@ -15,18 +15,18 @@ const ServiceTiers = () => {
     {
       id: "02",
       name: "Optimization",
-      subtitle: "Save time. Reduce friction.",
+      subtitle: "Save time and reduce frustration.",
       rate: "130",
       focus: "Includes:",
-      features: ["Workflow mapping", "File system restructuring", "Cloud consolidation", "Security hardening", "Automation setup", "Subscription audit"]
+      features: ["Workflow review", "File system organisation", "Cloud consolidation", "Security review", "Basic automation", "Subscription audit"]
     },
     {
       id: "03",
       name: "Recovery & Resilience",
-      subtitle: "When everything is broken.",
+      subtitle: "When things go wrong.",
       rate: "150",
       focus: "Includes:",
-      features: ["Data recovery coordination", "Full-system rebuild", "Secure migration", "Crisis response", "Long-term resilience planning"]
+      features: ["Data recovery help", "Full system rebuild", "Secure migration", "Emergency response", "Long-term backup planning"]
     }
   ];
 
@@ -39,7 +39,7 @@ const ServiceTiers = () => {
             <h2 className="text-5xl lg:text-7xl font-bold">Service Tiers</h2>
           </div>
           <p className="text-lg text-muted-foreground font-light max-w-xs">
-            Outcome-based value for high-trust digital architecture.
+            Clear, outcome-based pricing for reliable digital systems.
           </p>
         </div>
         

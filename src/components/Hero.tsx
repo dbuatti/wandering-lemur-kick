@@ -22,7 +22,7 @@ const Hero = () => {
           </h1>
           
           <p className="text-lg lg:text-2xl text-muted-foreground mb-12 font-light leading-relaxed max-w-2xl mx-auto px-4">
-            I design calm, secure, and high-performance digital environments for professionals who cannot afford technical friction.
+            I set up calm, secure, and reliable digital systems for professionals who need their technology to work perfectly every time.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center px-4">
