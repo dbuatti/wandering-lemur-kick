@@ -17,10 +17,13 @@ interface BookingDialogProps {
 const BookingDialog = ({ children }: BookingDialogProps) => {
   useEffect(() => {
     (async function () {
-      const cal = await getCalApi();
+      const cal = await getCalApi({ namespace: "it-services" });
       cal("ui", {
         theme: "dark",
-        styles: { branding: { brandColor: "#3b82f6" } },
+        cssVarsPerTheme: {
+          light: { "cal-brand": "#00022D" },
+          dark: { "cal-brand": "#fafafa" }
+        },
         hideEventTypeDetails: false,
         layout: "month_view",
       });
@@ -41,9 +44,14 @@ const BookingDialog = ({ children }: BookingDialogProps) => {
         
         <div className="flex-grow h-full overflow-y-auto">
           <Cal
-            calLink="daniele-buatti/15min"
+            namespace="it-services"
+            calLink="danielebuatti/it-services"
             style={{ width: "100%", height: "100%", minHeight: "600px" }}
-            config={{ layout: "month_view", theme: "dark" }}
+            config={{ 
+              layout: "month_view", 
+              theme: "dark",
+              useSlotsViewOnSmallScreen: true 
+            }}
           />
         </div>
       </DialogContent>
