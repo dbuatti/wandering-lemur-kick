@@ -38,15 +38,12 @@ const Specialties = () => {
             </div>
           </div>
           <div className="relative">
-            <div className="aspect-square rounded-3xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 p-8 flex items-center justify-center">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 p-12 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-6xl font-sans font-extrabold mb-4">6+</div>
-                <div className="text-xl font-serif text-white/80">Years of High-End Experience</div>
-                <div className="mt-8 flex justify-center gap-4 opacity-50 grayscale invert">
-                  {/* Placeholder for logos like Monash, etc. */}
-                  <div className="h-8 w-24 bg-white/20 rounded"></div>
-                  <div className="h-8 w-24 bg-white/20 rounded"></div>
-                </div>
+                <div className="text-8xl font-sans font-extrabold mb-4">06</div>
+                <div className="text-2xl font-serif text-white/80">Years of High-End Experience</div>
+                <div className="mt-6 h-px w-24 bg-white/30 mx-auto"></div>
+                <div className="mt-6 text-sm font-sans font-bold uppercase tracking-widest text-white/60">Melbourne Based</div>
               </div>
             </div>
             {/* Decorative element */}
