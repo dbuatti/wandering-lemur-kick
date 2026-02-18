@@ -18,6 +18,7 @@ const BookingDialog = ({ children }: BookingDialogProps) => {
   useEffect(() => {
     (async function () {
       const cal = await getCalApi({ namespace: "it-services" });
+      // Syncing UI configuration with your provided snippet
       cal("ui", {
         theme: "dark",
         cssVarsPerTheme: {
@@ -35,18 +36,18 @@ const BookingDialog = ({ children }: BookingDialogProps) => {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[900px] w-[95vw] bg-card border-white/10 text-white rounded-[2.5rem] p-0 overflow-hidden h-[85vh]">
-        <div className="p-8 pb-0">
+      <DialogContent className="sm:max-w-[1000px] w-[95vw] bg-card border-white/10 text-white rounded-[2.5rem] p-0 overflow-hidden h-[85vh] flex flex-col">
+        <div className="p-8 pb-4">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold tracking-tight">Schedule a Consultation</DialogTitle>
           </DialogHeader>
         </div>
         
-        <div className="flex-grow h-full overflow-y-auto">
+        <div className="flex-grow overflow-hidden">
           <Cal
             namespace="it-services"
             calLink="danielebuatti/it-services"
-            style={{ width: "100%", height: "100%", minHeight: "600px" }}
+            style={{ width: "100%", height: "100%" }}
             config={{ 
               layout: "month_view", 
               theme: "dark",
