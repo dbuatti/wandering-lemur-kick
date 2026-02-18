@@ -4,18 +4,18 @@ const Experience = () => {
   const features = [
     {
       icon: <ShieldCheck className="h-7 w-7" />,
-      title: "Corporate Security",
-      description: "Institutional-grade security protocols adapted for the private individual."
+      title: "Security & Privacy",
+      description: "Professional security protocols adapted for personal and private use."
     },
     {
       icon: <Apple className="h-7 w-7" />,
       title: "Apple Specialist",
-      description: "Certified expertise in creating a frictionless, unified Apple ecosystem."
+      description: "Expertise in creating a reliable and unified Apple ecosystem."
     },
     {
       icon: <Zap className="h-7 w-7" />,
-      title: "Efficiency Consulting",
-      description: "Optimizing digital workflows to reclaim hours of your professional week."
+      title: "Workflow Support",
+      description: "Improving digital workflows to save time and reduce frustration."
     }
   ];
 
@@ -25,12 +25,12 @@ const Experience = () => {
         <div className="grid lg:grid-cols-12 gap-16 items-center mb-24">
           <div className="lg:col-span-6">
             <h2 className="text-4xl lg:text-6xl font-bold leading-tight">
-              The Digital <br /><span className="text-primary">Handshake.</span>
+              Reliable <br /><span className="text-primary">IT Support.</span>
             </h2>
           </div>
           <div className="lg:col-span-6">
             <p className="text-xl text-muted-foreground font-light leading-relaxed">
-              I bridge the gap between professional business systems and a user-friendly personal life, projecting authority and trust through years of high-end experience.
+              I help bridge the gap between complex business systems and your personal digital life, providing clear and practical support.
             </p>
           </div>
         </div>

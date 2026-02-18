@@ -5,16 +5,16 @@ const AboutMe = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-16 lg:gap-24 items-center">
             <div className="lg:col-span-7">
-              <div className="inline-block text-xs font-bold tracking-widest uppercase text-muted-foreground mb-6">My Philosophy</div>
+              <div className="inline-block text-xs font-bold tracking-widest uppercase text-muted-foreground mb-6">My Approach</div>
               <h2 className="text-4xl lg:text-6xl font-sans font-extrabold mb-8 leading-tight">
-                Technology should be a <span className="italic font-serif font-light text-muted-foreground">lever</span>, not a friction point.
+                Technology should be <span className="italic font-serif font-light text-muted-foreground">simple</span> and reliable.
               </h2>
               <div className="space-y-6 text-lg lg:text-xl text-muted-foreground font-serif leading-relaxed">
                 <p>
-                  With over 6 years of experience as an IT Site Manager and Apple Specialist, I've seen how technology can either empower your craft or drain your energy.
+                  With experience as an IT Site Manager and Apple Specialist, I understand how technology can either support your work or become a source of frustration.
                 </p>
                 <p>
-                  I don't just fix devices; I partner with you to build a digital environment that supports your lifestyle. Whether you're a creative professional in Toorak or a boutique business owner in Parkdale, I bring the same level of care and precision to your personal tech as I did for multi-office accounting firms.
+                  I provide practical support to help you build a digital environment that works for you. Whether you are a professional or a small business owner, I bring the same level of care and attention to detail to your personal technology as I have for larger organisations.
                 </p>
               </div>
               
@@ -24,7 +24,7 @@ const AboutMe = () => {
                 </div>
                 <div>
                   <div className="text-xl font-sans font-bold text-primary">Daniele Buatti</div>
-                  <div className="text-sm font-serif text-muted-foreground italic">Your Private IT Director</div>
+                  <div className="text-sm font-serif text-muted-foreground italic">IT Support & Security</div>
                 </div>
               </div>
             </div>
@@ -33,12 +33,12 @@ const AboutMe = () => {
               <div className="relative">
                 <div className="absolute -inset-4 bg-primary/5 rounded-[2.5rem] blur-2xl"></div>
                 <div className="relative bg-white p-10 lg:p-12 rounded-[2.5rem] border border-border shadow-xl">
-                  <h3 className="text-2xl font-sans font-bold mb-10 text-black">Why Work With Me</h3>
+                  <h3 className="text-2xl font-sans font-bold mb-10 text-black">How I Help</h3>
                   <ul className="space-y-10">
                     {[
-                      { title: "Holistic Expertise", desc: "Security, efficiency, and hardware diagnostics in one place." },
-                      { title: "Results-Focused", desc: "Leave every session feeling more confident and capable." },
-                      { title: "Local & Personal", desc: "Based in Melbourne, providing on-site or remote support." }
+                      { title: "Practical Expertise", desc: "Security, efficiency, and hardware support in one place." },
+                      { title: "Clear Results", desc: "Ensuring your systems are reliable and easy to use." },
+                      { title: "Local Support", desc: "Based in Melbourne, providing on-site or remote assistance." }
                     ].map((item, i) => (
                       <li key={i} className="flex gap-6">
                         <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">

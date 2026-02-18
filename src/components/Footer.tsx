@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           <div>
             <div className="text-2xl font-sans font-extrabold text-primary mb-2">Daniele Buatti</div>
-            <p className="text-muted-foreground font-serif">Personal Technology Concierge</p>
+            <p className="text-muted-foreground font-serif">Personal Technology Support</p>
           </div>
           <div className="flex gap-8 text-sm font-serif">
             <a href="mailto:Daniele.buatti@gmail.com" className="hover:text-primary transition-colors">Daniele.buatti@gmail.com</a>

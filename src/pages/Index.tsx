@@ -4,7 +4,6 @@ import Experience from "@/components/Experience";
 import ServiceTiers from "@/components/ServiceTiers";
 import Specialties from "@/components/Specialties";
 import AboutMe from "@/components/AboutMe";
-import Testimonials from "@/components/Testimonials";
 import Process from "@/components/Process";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
@@ -24,7 +23,6 @@ const Index = () => {
         <div id="specialties">
           <Specialties />
         </div>
-        <Testimonials />
         <div id="tiers">
           <ServiceTiers />
         </div>
@@ -35,9 +33,9 @@ const Index = () => {
           <div className="container px-6 mx-auto">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
-                <h2 className="text-4xl lg:text-6xl font-bold mb-6">Ready to <span className="text-primary">Optimize?</span></h2>
+                <h2 className="text-4xl lg:text-6xl font-bold mb-6">Need <span className="text-primary">Support?</span></h2>
                 <p className="text-xl text-muted-foreground font-light">
-                  Fill out the form below and I'll get back to you with a tailored plan.
+                  Fill out the form below and I'll get back to you to discuss how I can help.
                 </p>
               </div>
               <div className="bg-white/5 p-8 lg:p-12 rounded-[3rem] border border-white/10 shadow-2xl">

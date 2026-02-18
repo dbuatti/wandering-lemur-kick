@@ -4,15 +4,15 @@ const Specialties = () => {
   const specialties = [
     {
       title: "Separating Work & Personal",
-      description: "Avoiding the '2-laptop' trap via MacOS User Profiles and secure containers."
+      description: "Managing multiple roles without needing multiple devices through secure profiles."
     },
     {
       title: "Privacy Audits",
-      description: "Ensuring your photos, emails, and bank data are truly private and encrypted."
+      description: "Ensuring your personal data, emails, and accounts are secure and encrypted."
     },
     {
-      title: "Digital De-cluttering",
-      description: "Organizing 10+ years of digital mess into a clean, searchable, and backed-up system."
+      title: "Digital Organisation",
+      description: "Sorting through digital clutter to create a clean, searchable, and backed-up system."
     }
   ];
 
@@ -21,9 +21,9 @@ const Specialties = () => {
       <div className="container px-6 mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-3xl lg:text-4xl font-sans font-bold mb-6">Specialized Solutions</h2>
+            <h2 className="text-3xl lg:text-4xl font-sans font-bold mb-6">Specialised Solutions</h2>
             <p className="text-xl text-white/80 font-serif mb-10 leading-relaxed">
-              I solve the "Tech Gap"—the space between professional business systems and a user-friendly home/mobile life.
+              I focus on the practical side of technology—making sure your devices work for you, not against you.
             </p>
             <div className="space-y-8">
               {specialties.map((item, index) => (
@@ -40,8 +40,8 @@ const Specialties = () => {
           <div className="relative">
             <div className="aspect-square rounded-3xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 p-12 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-8xl font-sans font-extrabold mb-4">06</div>
-                <div className="text-2xl font-serif text-white/80">Years of High-End Experience</div>
+                <div className="text-4xl font-sans font-bold mb-4 text-white">Practical IT</div>
+                <div className="text-xl font-serif text-white/80">Support for your home and office</div>
                 <div className="mt-6 h-px w-24 bg-white/30 mx-auto"></div>
                 <div className="mt-6 text-sm font-sans font-bold uppercase tracking-widest text-white/60">Melbourne Based</div>
               </div>

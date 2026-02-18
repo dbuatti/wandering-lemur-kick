@@ -4,23 +4,23 @@ const Process = () => {
   const steps = [
     {
       icon: <Search className="h-6 w-6" />,
-      title: "Digital Audit",
-      description: "A deep dive into your current hardware, software, and security posture to identify friction points."
+      title: "Initial Audit",
+      description: "A review of your current hardware, software, and security to find areas for improvement."
     },
     {
       icon: <Settings className="h-6 w-6" />,
-      title: "Tailored Strategy",
-      description: "I design a custom ecosystem plan that aligns your professional needs with your personal lifestyle."
+      title: "Practical Plan",
+      description: "I create a plan that fits your specific needs and daily routine."
     },
     {
       icon: <Zap className="h-6 w-6" />,
-      title: "Implementation",
-      description: "Hands-on setup, optimization, and training to ensure your new systems are seamless from day one."
+      title: "Setup",
+      description: "Hands-on setup and training to make sure everything works correctly from the start."
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "Ongoing Support",
-      description: "Priority access for troubleshooting, updates, and proactive security monitoring."
+      title: "Support",
+      description: "Ongoing help for troubleshooting, updates, and security monitoring."
     }
   ];
 
@@ -30,7 +30,7 @@ const Process = () => {
         <div className="max-w-3xl mb-20">
           <h2 className="text-4xl lg:text-6xl font-bold mb-6">The <span className="text-primary">Process.</span></h2>
           <p className="text-xl text-muted-foreground font-light">
-            A structured approach to transforming your digital life from chaotic to concierge-managed.
+            A straightforward approach to getting your technology organised and secure.
           </p>
         </div>
 

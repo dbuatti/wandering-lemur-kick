@@ -23,7 +23,7 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-10">
           <a href="#experience" className="nav-link">Experience</a>
           <a href="#specialties" className="nav-link">Specialties</a>
-          <a href="#tiers" className="nav-link">Investment</a>
+          <a href="#tiers" className="nav-link">Pricing</a>
           <BookingDialog>
             <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest">
               Book Now

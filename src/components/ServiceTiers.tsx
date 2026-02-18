@@ -4,19 +4,19 @@ const ServiceTiers = () => {
   const tiers = [
     {
       id: "01",
-      name: "Tech Concierge",
+      name: "Tech Support",
       rate: "100",
-      features: ["iCloud Optimization", "Software Training", "Performance Tuning"]
+      features: ["iCloud Optimisation", "Software Training", "Performance Tuning"]
     },
     {
       id: "02",
-      name: "Efficiency Partner",
+      name: "Workflow Partner",
       rate: "130",
       features: ["Workflow Audits", "Security Hardening", "Profile Separation"]
     },
     {
       id: "03",
-      name: "Hardware Surgery",
+      name: "Hardware Support",
       rate: "150",
       features: ["Hardware Diagnostics", "Component Repairs", "Data Recovery"]
     }
@@ -27,11 +27,11 @@ const ServiceTiers = () => {
       <div className="container px-6 mx-auto">
         <div className="flex flex-col lg:flex-row justify-between items-end mb-24 gap-8">
           <div className="max-w-2xl">
-            <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">Investment</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">Pricing</div>
             <h2 className="text-5xl lg:text-7xl font-bold">Service Tiers</h2>
           </div>
           <p className="text-lg text-muted-foreground font-light max-w-xs">
-            Transparent, premium rates for specialized expertise.
+            Clear and transparent rates for specialised IT support.
           </p>
         </div>
         
