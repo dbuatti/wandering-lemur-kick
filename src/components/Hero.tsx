@@ -25,7 +25,10 @@ const Hero = () => {
             <Button className="h-16 px-12 rounded-full bg-primary text-white hover:bg-primary/90 hover:scale-105 transition-all duration-300 text-sm font-bold">
               Book Consultation <ArrowRight className="ml-3 h-4 w-4" />
             </Button>
-            <Button variant="outline" className="h-16 px-12 rounded-full border-white/10 hover:bg-white/5 text-sm font-bold">
+            <Button 
+              variant="outline" 
+              className="h-16 px-12 rounded-full border-white/20 hover:bg-white hover:text-black transition-all duration-300 text-sm font-bold"
+            >
               <Mail className="mr-3 h-4 w-4" /> Make Enquiry
             </Button>
           </div>
