@@ -17,23 +17,37 @@ const Specialties = () => {
   ];
 
   return (
-    <section className="py-24 bg-card border-y border-white/5">
+    <section className="py-24 bg-secondary text-white">
       <div className="container px-6 mx-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-5xl font-bold mb-6">Specialized Solutions</h2>
-            <p className="text-xl text-muted-foreground font-light leading-relaxed">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-3xl lg:text-4xl font-sans font-bold mb-6">Specialized Solutions</h2>
+            <p className="text-xl text-white/80 font-serif mb-10 leading-relaxed">
               I solve the "Tech Gap"—the space between professional business systems and a user-friendly home/mobile life.
             </p>
+            <div className="space-y-8">
+              {specialties.map((item, index) => (
+                <div key={index} className="flex gap-4">
+                  <CheckCircle2 className="h-6 w-6 text-white flex-shrink-0 mt-1" />
+                  <div>
+                    <h4 className="text-lg font-sans font-bold mb-1">{item.title}</h4>
+                    <p className="text-white/70 font-serif">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {specialties.map((item, index) => (
-              <div key={index} className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/30 transition-all duration-500">
-                <CheckCircle2 className="h-8 w-8 text-primary mb-6" />
-                <h4 className="text-xl font-bold mb-4 text-white">{item.title}</h4>
-                <p className="text-muted-foreground leading-relaxed">{item.description}</p>
+          <div className="relative">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 p-12 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-8xl font-sans font-extrabold mb-4">06</div>
+                <div className="text-2xl font-serif text-white/80">Years of High-End Experience</div>
+                <div className="mt-6 h-px w-24 bg-white/30 mx-auto"></div>
+                <div className="mt-6 text-sm font-sans font-bold uppercase tracking-widest text-white/60">Melbourne Based</div>
               </div>
-            ))}
+            </div>
+            {/* Decorative element */}
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
           </div>
         </div>
       </div>

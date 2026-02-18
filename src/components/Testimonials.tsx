@@ -16,7 +16,7 @@ const Testimonials = () => {
 
   return (
     <section className="section-padding bg-background relative overflow-hidden">
-      <div className="container px-4 mx-auto relative z-10">
+      <div className="container px-6 mx-auto relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-24">
           <h2 className="text-4xl lg:text-5xl font-sans font-extrabold mb-6">Client Feedback</h2>
           <p className="text-xl text-muted-foreground font-serif">
@@ -50,7 +50,7 @@ const Testimonials = () => {
       </div>
       
       {/* Decorative background */}
-      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-white to-transparent -z-10"></div>
+      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-white/5 to-transparent -z-10"></div>
     </section>
   );
 };
