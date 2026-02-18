@@ -1,24 +1,32 @@
+"use client";
+
 import { ArrowUpRight, Check } from "lucide-react";
 
 const ServiceTiers = () => {
   const tiers = [
     {
       id: "01",
-      name: "Tech Support",
+      name: "Maintenance",
+      subtitle: "Keep things running.",
       rate: "100",
-      features: ["iCloud Optimisation", "Software Training", "Performance Tuning"]
+      focus: "For professionals who want:",
+      features: ["Fast troubleshooting", "Device setup", "Basic security checks", "Ongoing support access"]
     },
     {
       id: "02",
-      name: "Workflow Partner",
+      name: "Optimization",
+      subtitle: "Save time. Reduce friction.",
       rate: "130",
-      features: ["Workflow Audits", "Security Hardening", "Profile Separation"]
+      focus: "Includes:",
+      features: ["Workflow mapping", "File system restructuring", "Cloud consolidation", "Security hardening", "Automation setup", "Subscription audit"]
     },
     {
       id: "03",
-      name: "Hardware Support",
+      name: "Recovery & Resilience",
+      subtitle: "When everything is broken.",
       rate: "150",
-      features: ["Hardware Diagnostics", "Component Repairs", "Data Recovery"]
+      focus: "Includes:",
+      features: ["Data recovery coordination", "Full-system rebuild", "Secure migration", "Crisis response", "Long-term resilience planning"]
     }
   ];
 
@@ -31,7 +39,7 @@ const ServiceTiers = () => {
             <h2 className="text-5xl lg:text-7xl font-bold">Service Tiers</h2>
           </div>
           <p className="text-lg text-muted-foreground font-light max-w-xs">
-            Clear and transparent rates for specialised IT support.
+            Outcome-based value for high-trust digital architecture.
           </p>
         </div>
         
@@ -43,12 +51,15 @@ const ServiceTiers = () => {
                 <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               
-              <h3 className="text-3xl font-bold mb-8">{tier.name}</h3>
+              <h3 className="text-3xl font-bold mb-2">{tier.name}</h3>
+              <p className="text-sm text-muted-foreground mb-8 font-light">{tier.subtitle}</p>
               
               <div className="mb-12">
                 <span className="text-5xl font-bold text-white">${tier.rate}</span>
                 <span className="text-sm font-medium text-muted-foreground ml-2">/ hr</span>
               </div>
+              
+              <div className="mb-6 text-xs font-bold uppercase tracking-widest text-white/40">{tier.focus}</div>
               
               <ul className="space-y-5 flex-grow">
                 {tier.features.map((feature, i) => (

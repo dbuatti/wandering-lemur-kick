@@ -29,8 +29,8 @@ import { supabase } from "@/integrations/supabase/client";
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  service: z.string({ required_error: "Please select a service." }),
-  message: z.string().min(10, { message: "Message must be at least 10 characters." }),
+  service: z.string({ required_error: "Please select an option." }),
+  message: z.string().min(10, { message: "Please provide a bit more detail." }),
 });
 
 const EnquiryForm = () => {
@@ -101,18 +101,20 @@ const EnquiryForm = () => {
           name="service"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Service Required</FormLabel>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">What's happening?</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl focus:ring-primary">
-                    <SelectValue placeholder="Select a service tier" />
+                    <SelectValue placeholder="Select the best description" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="bg-card border-white/10">
-                  <SelectItem value="concierge">Tech Concierge ($100/hr)</SelectItem>
-                  <SelectItem value="efficiency">Efficiency Partner ($130/hr)</SelectItem>
-                  <SelectItem value="hardware">Hardware Surgery ($150/hr)</SelectItem>
-                  <SelectItem value="other">Other / Custom Project</SelectItem>
+                  <SelectItem value="disorganized">My files are disorganized</SelectItem>
+                  <SelectItem value="security">I need to secure my accounts</SelectItem>
+                  <SelectItem value="subscriptions">I’m overwhelmed by subscriptions</SelectItem>
+                  <SelectItem value="sync">My devices aren’t syncing properly</SelectItem>
+                  <SelectItem value="reset">I need a full digital reset</SelectItem>
+                  <SelectItem value="broken">Something broke and I need help</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -125,10 +127,10 @@ const EnquiryForm = () => {
           name="message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">How can I help?</FormLabel>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tell me more</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Tell me about your current tech challenges..." 
+                  placeholder="Briefly describe your current tech challenges..." 
                   className="bg-white/5 border-white/10 min-h-[120px] rounded-xl focus:ring-primary resize-none" 
                   {...field} 
                 />

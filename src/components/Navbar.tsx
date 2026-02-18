@@ -25,9 +25,10 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Experience", href: "#experience" },
-    { name: "Specialties", href: "#specialties" },
-    { name: "Pricing", href: "#tiers" },
+    { name: "Security", href: "#security" },
+    { name: "Clean Sweep™", href: "#clean-sweep" },
+    { name: "Tiers", href: "#tiers" },
+    { name: "Contact", href: "#contact" },
   ];
 
   return (

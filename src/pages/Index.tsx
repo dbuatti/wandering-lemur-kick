@@ -1,10 +1,10 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import Experience from "@/components/Experience";
+import Authority from "@/components/Authority";
+import SecurityConcrete from "@/components/SecurityConcrete";
+import DigitalCleanSweep from "@/components/DigitalCleanSweep";
 import ServiceTiers from "@/components/ServiceTiers";
-import Specialties from "@/components/Specialties";
-import AboutMe from "@/components/AboutMe";
-import Process from "@/components/Process";
+import FounderStatement from "@/components/FounderStatement";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import EnquiryForm from "@/components/EnquiryForm";
@@ -15,27 +15,31 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         <Hero />
-        <div id="experience">
-          <Experience />
+        <Authority />
+        
+        <div id="security">
+          <SecurityConcrete />
         </div>
-        <AboutMe />
-        <Process />
-        <div id="specialties">
-          <Specialties />
+        
+        <div id="clean-sweep">
+          <DigitalCleanSweep />
         </div>
+        
         <div id="tiers">
           <ServiceTiers />
         </div>
+        
+        <FounderStatement />
+        
         <FAQ />
         
-        {/* Dedicated Enquiry Section */}
         <section id="contact" className="section-padding bg-black/50">
           <div className="container px-6 mx-auto">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
-                <h2 className="text-4xl lg:text-6xl font-bold mb-6">Need <span className="text-primary">Support?</span></h2>
+                <h2 className="text-4xl lg:text-6xl font-bold mb-6">Start a <span className="text-primary">Conversation.</span></h2>
                 <p className="text-xl text-muted-foreground font-light">
-                  Fill out the form below and I'll get back to you to discuss how I can help.
+                  I typically respond to new enquiries within 24 hours.
                 </p>
               </div>
               <div className="bg-white/5 p-8 lg:p-12 rounded-[3rem] border border-white/10 shadow-2xl">
