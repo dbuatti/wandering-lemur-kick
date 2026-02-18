@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    /* Sophisticated Obsidian & Amber Palette */
-    --background: 20 14% 4%; /* Deep Obsidian */
-    --foreground: 60 10% 98%; /* Off-white */
+    /* Professional Midnight Slate & Electric Blue Palette */
+    --background: 222 47% 4%; /* Deep Midnight */
+    --foreground: 210 40% 98%; /* Crisp White */
 
-    --card: 20 14% 6%;
-    --card-foreground: 60 10% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 20 14% 6%;
-    --popover-foreground: 60 10% 98%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 38 92% 50%; /* Refined Amber */
-    --primary-foreground: 20 14% 4%;
+    --primary: 217 91% 60%; /* Electric Blue */
+    --primary-foreground: 222 47% 4%;
 
-    --secondary: 20 10% 15%; /* Warm Charcoal */
-    --secondary-foreground: 60 10% 98%;
+    --secondary: 215 25% 15%; /* Slate Gray */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 20 10% 12%;
-    --muted-foreground: 20 5% 65%;
+    --muted: 215 25% 12%;
+    --muted-foreground: 215 15% 65%;
 
-    --accent: 38 92% 50%;
-    --accent-foreground: 20 14% 4%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 222 47% 4%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 60 10% 98%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 20 10% 15%;
-    --input: 20 10% 15%;
-    --ring: 38 92% 50%;
+    --border: 215 25% 15%;
+    --input: 215 25% 15%;
+    --ring: 217 91% 60%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
   }
 
   html {
