@@ -4,6 +4,9 @@ import Experience from "@/components/Experience";
 import ServiceTiers from "@/components/ServiceTiers";
 import Specialties from "@/components/Specialties";
 import AboutMe from "@/components/AboutMe";
+import Testimonials from "@/components/Testimonials";
+import Process from "@/components/Process";
+import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import EnquiryForm from "@/components/EnquiryForm";
 
@@ -17,12 +20,15 @@ const Index = () => {
           <Experience />
         </div>
         <AboutMe />
+        <Process />
         <div id="specialties">
           <Specialties />
         </div>
+        <Testimonials />
         <div id="tiers">
           <ServiceTiers />
         </div>
+        <FAQ />
         
         {/* Dedicated Enquiry Section */}
         <section id="contact" className="section-padding bg-black/50">
