@@ -1,4 +1,4 @@
-import { MadeWithDyad } from "./made-with-dyad";
+"use client";
 
 const Footer = () => {
   return (
@@ -18,7 +18,6 @@ const Footer = () => {
           <p className="text-sm text-muted-foreground font-serif">
             © {new Date().getFullYear()} Daniele Buatti. All rights reserved.
           </p>
-          <MadeWithDyad />
         </div>
       </div>
     </footer>
