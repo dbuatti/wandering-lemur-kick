@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    /* FOMO Finance Inspired Palette */
-    --background: 0 0% 98%; /* Very light gray/white */
-    --foreground: 222 47% 11%; /* Dark navy for text */
+    /* Professional Midnight Slate & Electric Blue Palette */
+    --background: 222 47% 4%; /* Deep Midnight */
+    --foreground: 210 40% 98%; /* Crisp White */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 150 60% 50%; /* Vibrant Mint Green */
-    --primary-foreground: 0 0% 100%;
+    --primary: 217 91% 60%; /* Electric Blue */
+    --primary-foreground: 222 47% 4%;
 
-    --secondary: 222 47% 11%; /* Dark Navy */
+    --secondary: 215 25% 15%; /* Slate Gray */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 215 25% 12%;
+    --muted-foreground: 215 15% 65%;
 
-    --accent: 150 60% 50%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 222 47% 4%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 150 60% 50%;
+    --border: 215 25% 15%;
+    --input: 215 25% 15%;
+    --ring: 217 91% 60%;
 
-    --radius: 2rem;
+    --radius: 1.25rem;
   }
 
   html {
@@ -51,20 +51,20 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-black tracking-tighter uppercase text-foreground;
+    @apply font-sans font-bold tracking-tight text-foreground;
   }
 }
 
 @layer components {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  
   .section-padding {
-    @apply py-20 lg:py-32;
+    @apply py-24 lg:py-32;
   }
 
-  .btn-primary {
-    @apply bg-primary text-white hover:bg-primary/90 rounded-full px-8 py-4 font-bold transition-all duration-300 hover:scale-105;
-  }
-
-  .card-shadow {
-    @apply shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-black/5;
+  .nav-link {
+    @apply text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-300;
   }
 }

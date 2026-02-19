@@ -49,7 +49,7 @@ const BookingDialog = ({ children }: BookingDialogProps) => {
         config={{ 
           layout: "month_view", 
           theme: "dark",
-          useSlotsViewOnSmallScreen: true as any
+          useSlotsViewOnSmallScreen: true 
         }}
       />
     </div>
