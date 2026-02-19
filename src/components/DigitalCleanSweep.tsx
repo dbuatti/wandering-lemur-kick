@@ -1,52 +1,55 @@
 "use client";
 
-import { Sparkles, Zap, ShieldCheck, BarChart3 } from "lucide-react";
+import { Zap, ShieldCheck, BarChart3, Sparkles } from "lucide-react";
 
 const DigitalCleanSweep = () => {
   const benefits = [
     {
-      icon: <Zap className="h-6 w-6" />,
+      icon: <Zap className="h-8 w-8 text-orange-500" />,
       title: "Remove Duplicates",
-      desc: "Stop paying for multiple cloud services and subscriptions you don't need."
+      color: "bg-orange-50"
     },
     {
-      icon: <BarChart3 className="h-6 w-6" />,
+      icon: <BarChart3 className="h-8 w-8 text-blue-500" />,
       title: "Organise Storage",
-      desc: "One simple, searchable, and backed-up system for all your files."
+      color: "bg-blue-50"
     },
     {
-      icon: <ShieldCheck className="h-6 w-6" />,
-      title: "Lower Monthly Costs",
-      desc: "In many cases, the savings cover the cost of my service within a few months."
+      icon: <ShieldCheck className="h-8 w-8 text-purple-500" />,
+      title: "Lower Costs",
+      color: "bg-purple-50"
     },
     {
-      icon: <Sparkles className="h-6 w-6" />,
-      title: "Clear the Clutter",
-      desc: "Get rid of the digital mess that slows down your work."
+      icon: <Sparkles className="h-8 w-8 text-pink-500" />,
+      title: "Clear Clutter",
+      color: "bg-pink-50"
     }
   ];
 
   return (
-    <section className="section-padding bg-black">
+    <section className="section-padding bg-[#1a2b3b] text-white rounded-[3rem] mx-4 lg:mx-8 mb-24">
       <div className="container px-6 mx-auto">
-        <div className="max-w-4xl mx-auto text-center mb-20">
-          <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">Core Service</div>
-          <h2 className="text-4xl lg:text-6xl font-bold mb-8">The Digital Clean Sweep</h2>
-          <p className="text-xl text-muted-foreground font-light leading-relaxed">
-            Most professionals pay for old platforms they no longer use and have files scattered everywhere. I review your entire setup to bring everything into order.
-          </p>
+        <div className="text-center mb-20">
+          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-4">EFFICIENT SERVICES</h2>
+          <p className="text-white/60 font-medium">Tools and systems we trust to keep you organized.</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {benefits.map((benefit, index) => (
-            <div key={index} className="p-10 rounded-[2rem] bg-white/5 border border-white/5 hover:border-primary/20 transition-all duration-500">
-              <div className="mb-6 text-primary">{benefit.icon}</div>
-              <h3 className="text-2xl font-bold mb-4">{benefit.title}</h3>
-              <p className="text-muted-foreground font-light leading-relaxed">
-                {benefit.desc}
-              </p>
+            <div key={index} className={`aspect-[4/5] ${benefit.color} rounded-3xl flex flex-col items-center justify-center p-8 transition-transform hover:-translate-y-2 duration-300`}>
+              <div className="mb-6">{benefit.icon}</div>
+              <div className="text-black font-black text-center text-sm uppercase tracking-tighter leading-tight">
+                {benefit.title}
+              </div>
             </div>
           ))}
+        </div>
+
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-sm text-white/60 leading-relaxed">
+            At DB IT, we're all about the background checks and we only recommend systems we trust. Of course, there's no one size fits all, so we've found the best in class for our many and varied clients.
+          </p>
+          <button className="mt-6 text-primary font-bold text-sm underline underline-offset-4">View all services</button>
         </div>
       </div>
     </section>

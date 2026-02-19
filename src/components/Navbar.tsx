@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -32,65 +32,55 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-4 bg-black/80 backdrop-blur-lg border-b border-white/10" : "py-6 lg:py-8 bg-transparent"}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "py-4 bg-white/80 backdrop-blur-md border-b border-black/5" : "py-6 bg-transparent"}`}>
       <div className="container px-6 mx-auto flex justify-between items-center">
-        <div className="text-lg lg:text-xl font-bold tracking-tighter">
-          DANIELE <span className="text-primary">BUATTI</span>
+        <div className="text-2xl font-black tracking-tighter flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-full"></div>
+          <span>DANIELE BUATTI</span>
         </div>
         
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-10">
+        <div className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
-            <a key={link.name} href={link.href} className="nav-link">
+            <a key={link.name} href={link.href} className="text-sm font-bold uppercase tracking-widest text-foreground/60 hover:text-primary transition-colors">
               {link.name}
             </a>
           ))}
           <BookingDialog>
-            <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest">
-              Book Now
+            <Button className="rounded-full bg-secondary text-white hover:bg-secondary/90 px-6 font-bold text-xs uppercase tracking-widest">
+              Get Started
             </Button>
           </BookingDialog>
         </div>
 
-        {/* Mobile Menu Trigger */}
         <div className="md:hidden flex items-center gap-4">
-          <BookingDialog>
-            <Button size="sm" className="rounded-full px-4 h-9 text-[10px] font-bold uppercase tracking-widest">
-              Book
-            </Button>
-          </BookingDialog>
-          
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white">
+              <Button variant="ghost" size="icon">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-black border-white/10 text-white w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="bg-white border-l border-black/5 w-[300px]">
               <SheetHeader className="text-left mb-12">
-                <SheetTitle className="text-white text-xl font-bold tracking-tighter">
+                <SheetTitle className="text-2xl font-black tracking-tighter">
                   DANIELE <span className="text-primary">BUATTI</span>
                 </SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col space-y-8">
+              <div className="flex flex-col space-y-6">
                 {navLinks.map((link) => (
                   <a 
                     key={link.name} 
                     href={link.href} 
-                    className="text-2xl font-bold hover:text-primary transition-colors"
+                    className="text-xl font-black uppercase tracking-tighter hover:text-primary transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     {link.name}
                   </a>
                 ))}
-                <div className="pt-8 border-t border-white/10">
-                  <p className="text-sm text-muted-foreground mb-4">Ready to start?</p>
-                  <BookingDialog>
-                    <Button className="w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest">
-                      Book a Consultation
-                    </Button>
-                  </BookingDialog>
-                </div>
+                <BookingDialog>
+                  <Button className="w-full rounded-full h-14 bg-primary text-white font-bold uppercase tracking-widest">
+                    Book Now
+                  </Button>
+                </BookingDialog>
               </div>
             </SheetContent>
           </Sheet>

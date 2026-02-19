@@ -1,50 +1,43 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SecurityConcrete = () => {
-  const deliverables = [
-    "Password manager setup and data migration",
-    "Two-factor authentication for all major accounts",
-    "Review of leaked data and account exposure",
-    "Google and Apple account security review",
-    "Verification of device encryption",
-    "Backup setup (local and encrypted cloud)",
-    "Account recovery plan (so you are never locked out)"
-  ];
-
   return (
-    <section className="section-padding bg-background">
+    <section className="section-padding bg-secondary text-white rounded-[3rem] mx-4 lg:mx-8 mb-24">
       <div className="container px-6 mx-auto">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">Security & Privacy</div>
-              <h2 className="text-4xl lg:text-5xl font-bold mb-8 leading-tight">
-                Professional security for your <span className="text-primary">personal life.</span>
-              </h2>
-              <p className="text-xl text-muted-foreground font-light mb-10 leading-relaxed">
-                I use the same security methods as large businesses to protect your personal accounts, data, and identity.
-              </p>
-              <div className="p-8 rounded-3xl bg-primary/5 border border-primary/10">
-                <p className="text-lg font-medium text-white italic">
-                  "I apply high-level security principles to your personal digital life."
-                </p>
-              </div>
-            </div>
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h2 className="text-5xl lg:text-7xl font-black tracking-tighter mb-8">HOW WE <br />CAN HELP</h2>
+          
+          <Tabs defaultValue="security" className="w-full">
+            <TabsList className="bg-transparent border-b border-white/10 w-full justify-center rounded-none h-auto p-0 mb-12">
+              <TabsTrigger value="security" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8 py-4 text-xs font-bold uppercase tracking-widest text-white/40">
+                Security Audit
+              </TabsTrigger>
+              <TabsTrigger value="workflow" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8 py-4 text-xs font-bold uppercase tracking-widest text-white/40">
+                Workflow Setup
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8 py-4 text-xs font-bold uppercase tracking-widest text-white/40">
+                Privacy Review
+              </TabsTrigger>
+            </TabsList>
             
-            <div className="bg-white/5 p-10 lg:p-12 rounded-[2.5rem] border border-white/10">
-              <h3 className="text-xl font-bold mb-8">Privacy & Security Audit Includes:</h3>
-              <ul className="space-y-6">
-                {deliverables.map((item, index) => (
-                  <li key={index} className="flex gap-4 items-start">
-                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground font-light">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+            <TabsContent value="security" className="mt-0">
+              <p className="text-xl lg:text-2xl font-medium leading-relaxed text-white/80 max-w-3xl mx-auto">
+                Do you have <span className="text-primary">FOMO</span> because you're nervous about your data security? It takes expert planning to make the perfect transition to a secure digital life. Lucky for you, I've done it thousands of times. I have the expertise on hand to reduce your anxiety and get a great result.
+              </p>
+            </TabsContent>
+            <TabsContent value="workflow" className="mt-0">
+              <p className="text-xl lg:text-2xl font-medium leading-relaxed text-white/80 max-w-3xl mx-auto">
+                Stop fighting your devices. I create unified Apple ecosystems that just work. From file organization to cloud syncing, I build the architecture that supports your daily life without the friction.
+              </p>
+            </TabsContent>
+            <TabsContent value="privacy" className="mt-0">
+              <p className="text-xl lg:text-2xl font-medium leading-relaxed text-white/80 max-w-3xl mx-auto">
+                Your personal data shouldn't be public property. I perform deep privacy audits to ensure your emails, accounts, and identity are protected by professional-grade encryption and protocols.
+              </p>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </section>
