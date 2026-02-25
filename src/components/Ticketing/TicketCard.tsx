@@ -28,11 +28,12 @@ interface TicketCardProps {
     actual_hours: number | null;
     tags: string[];
   };
+  viewMode?: 'grid' | 'list';
   onStatusChange: (ticketId: string, status: string) => void;
   onAssign: (ticketId: string, userId: string | null) => void;
 }
 
-const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
+const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign }: TicketCardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
