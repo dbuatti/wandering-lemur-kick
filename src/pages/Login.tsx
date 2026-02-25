@@ -51,7 +51,11 @@ const Login = () => {
               },
             }}
             theme="dark"
-            providers={[]}
+            providers={['google']}
+            queryParams={{
+              access_type: 'offline',
+              prompt: 'consent',
+            }}
             redirectTo={window.location.origin + '/tickets'}
           />
         </div>
