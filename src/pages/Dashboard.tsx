@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import DashboardStats from "@/components/dashboard/DashboardStats";
-import RecentActivity from "@/components/dashboard/RecentActivity";
-import QuickActions from "@/components/dashboard/QuickActions";
-import { supabase } from "@/integrations/supabase/client";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import DashboardStats from "../components/dashboard/DashboardStats";
+import RecentActivity from "../components/dashboard/RecentActivity";
+import QuickActions from "../components/dashboard/QuickActions";
+import { supabase } from "../integrations/supabase/client";
 import { Loader2, Shield, ArrowRight, UserCheck, Ticket } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { cn } from "../lib/utils";
 
 const Dashboard = () => {
   const navigate = useNavigate();
