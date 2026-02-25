@@ -8,8 +8,10 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import QuickActions from "@/components/dashboard/QuickActions";
 import SystemHealth from "@/components/dashboard/SystemHealth";
 import CategoryChart from "@/components/dashboard/CategoryChart";
+import Scratchpad from "@/components/dashboard/Scratchpad";
+import CommandMenu from "@/components/CommandMenu";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Shield, ArrowRight, UserCheck, Ticket } from "lucide-react";
+import { Loader2, Shield, ArrowRight, UserCheck, Ticket, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,6 +118,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
+      <CommandMenu />
       <main className="flex-grow pt-32 pb-20">
         <div className="w-full px-6 md:px-12">
           <div className="w-full">
@@ -133,7 +136,7 @@ const Dashboard = () => {
                     Business <span className="text-primary">Overview.</span>
                   </h1>
                   <p className="text-lg text-muted-foreground font-light max-w-2xl">
-                    Welcome back, Daniele. Here's what's happening with your IT support services today.
+                    Welcome back, Daniele. Press <kbd className="px-2 py-1 rounded bg-white/10 text-xs font-mono">⌘K</kbd> to search anything.
                   </p>
                 </div>
                 <div className="flex gap-4">
@@ -211,6 +214,7 @@ const Dashboard = () => {
               </div>
               <div className="lg:col-span-4 space-y-8">
                 <QuickActions />
+                <Scratchpad />
                 <SystemHealth />
               </div>
             </div>

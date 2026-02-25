@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard, Search } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -64,11 +64,28 @@ const Navbar = () => {
               </Button>
             </BookingDialog>
           ) : (
-            <Link to="/dashboard">
-              <Button variant="outline" size="icon" className="rounded-full border-white/10">
-                <LayoutDashboard className="h-4 w-4" />
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+                onClick={() => {
+                  const event = new KeyboardEvent('keydown', {
+                    key: 'k',
+                    metaKey: true,
+                    bubbles: true
+                  });
+                  document.dispatchEvent(event);
+                }}
+              >
+                <Search className="h-4 w-4" />
               </Button>
-            </Link>
+              <Link to="/dashboard">
+                <Button variant="outline" size="icon" className="rounded-full border-white/10">
+                  <LayoutDashboard className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
 
