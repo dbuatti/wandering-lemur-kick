@@ -62,6 +62,7 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
     { id: 'device', label: 'Devices' },
     { id: 'login', label: 'Logins' },
     { id: 'software', label: 'Software' },
+    { id: 'link', label: 'Links' },
   ];
 
   return (
@@ -105,12 +106,12 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
             className="pl-11 bg-white/5 border-white/10 h-11 rounded-xl focus:ring-primary"
           />
         </div>
-        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-x-auto">
           {filters.map((f) => (
             <button
               key={f.id}
               onClick={() => setActiveFilter(f.id)}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${
                 activeFilter === f.id ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-white'
               }`}
             >

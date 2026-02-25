@@ -13,7 +13,8 @@ import {
   Trash2, 
   Edit2,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Link as LinkIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
@@ -39,6 +40,7 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
       case 'device': return <Laptop className="h-5 w-5" />;
       case 'login': return <Key className="h-5 w-5" />;
       case 'software': return <AppWindow className="h-5 w-5" />;
+      case 'link': return <LinkIcon className="h-5 w-5" />;
       default: return <FileText className="h-5 w-5" />;
     }
   };
@@ -106,7 +108,7 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
 
         <h4 className="font-bold text-white mb-1 truncate">{asset.name}</h4>
         <Badge variant="outline" className="bg-white/5 text-[9px] uppercase tracking-widest text-muted-foreground mb-4">
-          {asset.asset_type}
+          {asset.asset_type === 'link' ? 'Document Link' : asset.asset_type}
         </Badge>
 
         <div className="space-y-3">
@@ -168,6 +170,32 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
                 </div>
               )}
             </>
+          )}
+
+          {asset.asset_type === 'link' && asset.details.url && (
+            <div className="pt-2">
+              <Button 
+                asChild
+                className="w-full h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20 transition-all group/link"
+              >
+                <a 
+                  href={asset.details.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest"
+                >
+                  Open Document <ExternalLink className="h-3 w-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                </a>
+              </Button>
+              <div className="mt-3 flex justify-center">
+                <button 
+                  onClick={() => copyToClipboard(asset.details.url, "URL")}
+                  className="text-[9px] text-muted-foreground hover:text-white flex items-center gap-1 uppercase tracking-tighter"
+                >
+                  <Copy className="h-2.5 w-2.5" /> Copy Link
+                </button>
+              </div>
+            </div>
           )}
 
           {asset.asset_type === 'software' && asset.details.license_key && (

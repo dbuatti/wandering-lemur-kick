@@ -23,10 +23,10 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { Loader2, Save, Laptop, Key, AppWindow, FileText } from "lucide-react";
+import { Loader2, Save, Laptop, Key, AppWindow, FileText, Link as LinkIcon } from "lucide-react";
 
 const formSchema = z.object({
-  asset_type: z.enum(['device', 'login', 'software', 'other']),
+  asset_type: z.enum(['device', 'login', 'software', 'link', 'other']),
   name: z.string().min(2, "Name is required"),
   // Flexible fields based on type
   serial_number: z.string().optional(),
@@ -135,6 +135,9 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
                   <SelectItem value="software">
                     <div className="flex items-center gap-2"><AppWindow className="h-4 w-4" /> Software / App</div>
                   </SelectItem>
+                  <SelectItem value="link">
+                    <div className="flex items-center gap-2"><LinkIcon className="h-4 w-4" /> Link / Document</div>
+                  </SelectItem>
                   <SelectItem value="other">
                     <div className="flex items-center gap-2"><FileText className="h-4 w-4" /> Other Detail</div>
                   </SelectItem>
@@ -153,7 +156,8 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
               <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {assetType === 'device' ? 'Device Name (e.g. MacBook Pro)' : 
                  assetType === 'login' ? 'Service Name (e.g. iCloud)' :
-                 assetType === 'software' ? 'Application Name' : 'Title'}
+                 assetType === 'software' ? 'Application Name' : 
+                 assetType === 'link' ? 'Document Title (e.g. Problem Reference)' : 'Title'}
               </FormLabel>
               <FormControl>
                 <Input placeholder="Enter name..." {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
@@ -238,6 +242,22 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
               )}
             />
           </div>
+        )}
+
+        {assetType === 'link' && (
+          <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Document URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://docs.google.com/..." {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
 
         {assetType === 'software' && (
