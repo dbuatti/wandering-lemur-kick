@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -15,7 +16,8 @@ import {
   Clock, 
   AlertCircle,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  X
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,28 +38,35 @@ import { Badge } from "@/components/ui/badge";
 import TicketCard from "./TicketCard";
 import TicketForm from "./TicketForm";
 import { supabase } from "@/integrations/supabase/client";
-import { showSuccess, showError } from "@/utils/toast";
-import { format } from "date-fns";
+import { showError } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
 interface TicketListProps {
   initialFilter?: {
     status?: string;
     priority?: string;
     category?: string;
+    client_id?: string;
   };
 }
 
 const TicketList = ({ initialFilter }: TicketListProps) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const clientIdParam = searchParams.get('client');
+  
   const [tickets, setTickets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
   const [filter, setFilter] = useState({
     status: initialFilter?.status || 'all',
     priority: initialFilter?.priority || 'all',
     category: initialFilter?.category || 'all',
+    client_id: clientIdParam || initialFilter?.client_id || 'all',
   });
+  
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -72,6 +81,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
           status: filter.status === 'all' ? undefined : filter.status,
           priority: filter.priority === 'all' ? undefined : filter.priority,
           category: filter.category === 'all' ? undefined : filter.category,
+          client_id: filter.client_id === 'all' ? undefined : filter.client_id,
           limit: 12,
           offset: reset ? 0 : page * 12,
         }
@@ -99,6 +109,13 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     fetchTickets(true);
   }, [filter]);
 
+  // Sync filter with URL param
+  useEffect(() => {
+    if (clientIdParam && clientIdParam !== filter.client_id) {
+      setFilter(prev => ({ ...prev, client_id: clientIdParam }));
+    }
+  }, [clientIdParam]);
+
   const stats = useMemo(() => {
     return {
       total: tickets.length,
@@ -121,6 +138,13 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     setPage(0);
     setTickets([]);
     setHasMore(true);
+    
+    // Clear URL param if client filter is changed manually
+    if (key === 'client_id' && value === 'all') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('client');
+      setSearchParams(newParams);
+    }
   };
 
   const handleStatusChange = (ticketId: string, status: string) => {
@@ -152,29 +176,46 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   );
 
   const clearFilters = () => {
-    setFilter({ status: 'all', priority: 'all', category: 'all' });
+    setFilter({ status: 'all', priority: 'all', category: 'all', client_id: 'all' });
     setSearchTerm('');
+    setSearchParams({});
   };
 
-  const hasActiveFilters = filter.status !== 'all' || filter.priority !== 'all' || filter.category !== 'all' || searchTerm;
+  const hasActiveFilters = filter.status !== 'all' || filter.priority !== 'all' || filter.category !== 'all' || filter.client_id !== 'all' || searchTerm;
+
+  const statCards = [
+    { id: 'all', label: "Total", value: stats.total, icon: <BarChart3 className="h-4 w-4" />, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
+    { id: 'open', label: "Open", value: stats.open, icon: <AlertCircle className="h-4 w-4" />, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+    { id: 'in_progress', label: "In Progress", value: stats.inProgress, icon: <Clock className="h-4 w-4" />, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+    { id: 'resolved', label: "Resolved", value: stats.resolved, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
+    { id: 'overdue', label: "Overdue", value: stats.overdue, icon: <TrendingUp className="h-4 w-4" />, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+  ];
 
   return (
     <div className="space-y-8">
-      {/* Enhanced Stats Dashboard */}
+      {/* Interactive Stats Dashboard */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[
-          { label: "Total", value: stats.total, icon: <BarChart3 className="h-4 w-4" />, color: "text-primary", bg: "bg-primary/10" },
-          { label: "Open", value: stats.open, icon: <AlertCircle className="h-4 w-4" />, color: "text-blue-400", bg: "bg-blue-500/10" },
-          { label: "In Progress", value: stats.inProgress, icon: <Clock className="h-4 w-4" />, color: "text-purple-400", bg: "bg-purple-500/10" },
-          { label: "Resolved", value: stats.resolved, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-400", bg: "bg-green-500/10" },
-          { label: "Overdue", value: stats.overdue, icon: <TrendingUp className="h-4 w-4" />, color: "text-orange-400", bg: "bg-orange-500/10" },
-        ].map((stat, i) => (
-          <Card key={i} className="bg-white/5 border-white/10 overflow-hidden relative group hover:border-primary/20 transition-all">
-            <div className={`absolute top-0 left-0 w-1 h-full ${stat.bg.replace('bg-', 'bg-')}`} />
+        {statCards.map((stat) => (
+          <Card 
+            key={stat.id} 
+            className={cn(
+              "bg-white/5 border-white/10 overflow-hidden relative group cursor-pointer transition-all hover:scale-[1.02]",
+              filter.status === stat.id && "border-primary/50 bg-primary/5 ring-1 ring-primary/20",
+              stat.id === 'all' && filter.status === 'all' && "border-primary/50 bg-primary/5"
+            )}
+            onClick={() => handleFilterChange('status', stat.id)}
+          >
+            <div className={cn(
+              "absolute top-0 left-0 w-1 h-full transition-all",
+              filter.status === stat.id ? "bg-primary" : stat.bg.replace('bg-', 'bg-')
+            )} />
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{stat.label}</span>
-                <div className={`${stat.color} opacity-60 group-hover:opacity-100 transition-opacity`}>{stat.icon}</div>
+                <div className={cn(
+                  stat.color,
+                  filter.status === stat.id ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+                )}>{stat.icon}</div>
               </div>
               <div className="text-3xl font-bold">{stat.value}</div>
             </CardContent>
@@ -195,7 +236,10 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={`h-9 w-9 p-0 rounded-lg ${viewMode === 'grid' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-white'}`}
+                  className={cn(
+                    "h-9 w-9 p-0 rounded-lg transition-all",
+                    viewMode === 'grid' ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-white"
+                  )}
                   onClick={() => setViewMode('grid')}
                   title="Grid view"
                 >
@@ -204,7 +248,10 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={`h-9 w-9 p-0 rounded-lg ${viewMode === 'list' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-white'}`}
+                  className={cn(
+                    "h-9 w-9 p-0 rounded-lg transition-all",
+                    viewMode === 'list' ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-white"
+                  )}
                   onClick={() => setViewMode('list')}
                   title="List view"
                 >
@@ -281,31 +328,15 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 h-12">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Select onValueChange={(value) => handleFilterChange('category', value)} value={filter.category}>
-                  <SelectTrigger className="border-none bg-transparent focus:ring-0 w-[140px] h-full p-0">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-white/10">
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
-                    <SelectItem value="setup">Setup</SelectItem>
-                    <SelectItem value="optimization">Optimization</SelectItem>
-                    <SelectItem value="recovery">Recovery</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {hasActiveFilters && (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={clearFilters}
-                  className="h-12 px-4 text-muted-foreground hover:text-white"
+                  className="h-12 px-4 text-muted-foreground hover:text-white group"
                 >
-                  Clear
+                  <X className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+                  Clear Filters
                 </Button>
               )}
             </div>
@@ -340,15 +371,6 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                   Create Your First Ticket
                 </Button>
               )}
-              {hasActiveFilters && (
-                <Button 
-                  variant="link" 
-                  className="mt-2 text-primary"
-                  onClick={clearFilters}
-                >
-                  Clear all filters
-                </Button>
-              )}
             </div>
           ) : (
             <>
@@ -363,6 +385,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                     viewMode={viewMode}
                     onStatusChange={handleStatusChange}
                     onAssign={handleAssign}
+                    onDelete={(id) => setTickets(prev => prev.filter(t => t.id !== id))}
                   />
                 ))}
               </div>

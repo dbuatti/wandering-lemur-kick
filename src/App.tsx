@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
 import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Clients />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients/:id" 
+              element={
+                <ProtectedRoute>
+                  <ClientDetail />
                 </ProtectedRoute>
               } 
             />

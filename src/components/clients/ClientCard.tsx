@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Phone, Building2, ExternalLink } from "lucide-react";
+import { User, Mail, Phone, Building2, ExternalLink, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ClientCardProps {
@@ -15,10 +15,13 @@ const ClientCard = ({ client }: ClientCardProps) => {
   const navigate = useNavigate();
 
   return (
-    <Card className="bg-white/5 border-white/10 hover:border-primary/30 transition-all duration-300 group">
+    <Card 
+      className="bg-white/5 border-white/10 hover:border-primary/30 transition-all duration-300 group cursor-pointer"
+      onClick={() => navigate(`/clients/${client.id}`)}
+    >
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
             {client.is_company ? <Building2 className="h-6 w-6" /> : <User className="h-6 w-6" />}
           </div>
           <Badge variant="outline" className="bg-white/5 text-muted-foreground border-white/10 text-[10px] uppercase tracking-widest">
@@ -51,10 +54,13 @@ const ClientCard = ({ client }: ClientCardProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-primary hover:text-primary/80 h-8 px-2"
-            onClick={() => navigate(`/tickets?client=${client.id}`)}
+            className="text-primary hover:text-primary/80 h-8 px-2 group/btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/clients/${client.id}`);
+            }}
           >
-            View Tickets <ExternalLink className="ml-1.5 h-3 w-3" />
+            View Profile <ArrowRight className="ml-1.5 h-3 w-3 group-hover/btn:translate-x-1 transition-transform" />
           </Button>
         </div>
       </CardContent>
