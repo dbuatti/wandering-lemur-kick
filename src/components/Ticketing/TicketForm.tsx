@@ -54,41 +54,27 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
 
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, display_name, email, phone, type')
+        .order('display_name', { ascending: true });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+    } finally {
+      setIsLoadingClients(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('id, display_name, email, phone, type')
-          .order('display_name', { ascending: true });
-
-        if (error) throw error;
-        setClients(data || []);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-      } finally {
-        setIsLoadingClients(false);
-      }
-    };
-
     fetchClients();
   }, []);
 
   const handleClientCreated = () => {
-    // Refresh clients list
-    const fetchClients = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('id, display_name, email, phone, type')
-          .order('display_name', { ascending: true });
-
-        if (error) throw error;
-        setClients(data || []);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-      }
-    };
     fetchClients();
     setIsCreateClientOpen(false);
   };
@@ -181,7 +167,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
                     <DialogHeader className="mb-6">
                       <DialogTitle className="text-2xl font-bold">Add New Client</DialogTitle>
                     </DialogHeader>
-                    <ClientForm onClientCreated={handleClientCreated} />
+                    <ClientForm onSuccess={handleClientCreated} />
                   </DialogContent>
                 </Dialog>
               </div>
