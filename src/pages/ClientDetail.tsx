@@ -5,20 +5,22 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TicketList from "@/components/Ticketing/TicketList";
+import ClientAssetList from "@/components/clients/ClientAssetList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
   User, 
   Building2, 
   Mail, 
   Phone, 
-  MapPin, 
   Calendar,
-  ExternalLink,
   Shield,
-  Briefcase
+  Briefcase,
+  Ticket,
+  Database
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
@@ -165,12 +167,28 @@ const ClientDetail = () => {
               </div>
 
               <div className="lg:col-span-8">
-                <div className="mb-8">
-                  <h2 className="text-3xl font-bold tracking-tight mb-2">Service History</h2>
-                  <p className="text-muted-foreground">All tickets and projects associated with {client.display_name}.</p>
-                </div>
-                
-                <TicketList initialFilter={{ client_id: client.id }} />
+                <Tabs defaultValue="history" className="w-full">
+                  <TabsList className="bg-white/5 border border-white/10 p-1 rounded-2xl mb-8">
+                    <TabsTrigger value="history" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white">
+                      <Ticket className="h-4 w-4 mr-2" /> Service History
+                    </TabsTrigger>
+                    <TabsTrigger value="assets" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white">
+                      <Database className="h-4 w-4 mr-2" /> Technical Assets
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="history" className="mt-0">
+                    <div className="mb-8">
+                      <h2 className="text-3xl font-bold tracking-tight mb-2">Service History</h2>
+                      <p className="text-muted-foreground">All tickets and projects associated with {client.display_name}.</p>
+                    </div>
+                    <TicketList initialFilter={{ client_id: client.id }} />
+                  </TabsContent>
+                  
+                  <TabsContent value="assets" className="mt-0">
+                    <ClientAssetList clientId={client.id} />
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
           </div>
