@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PlusCircle, UserPlus, Sparkles, Image as ImageIcon, UploadCloud, X } from "lucide-react";
+import { Loader2, PlusCircle, UserPlus, Sparkles, Wand2, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -47,24 +47,22 @@ const formSchema = z.object({
 
 interface TicketFormProps {
   onTicketCreated?: (ticketId: string) => void;
+  initialClientId?: string;
 }
 
-const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
+const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
-  const [isOcrLoading, setIsOcrLoading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClients = async () => {
     try {
       const { data, error } = await supabase
         .from('clients')
         .select('id, display_name, email, phone, type')
-        .eq('is_it_client', true)
+        .eq('is_it_client', true) // Only show IT clients for tickets
         .order('display_name', { ascending: true });
 
       if (error) throw error;
@@ -80,6 +78,11 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
     fetchClients();
   }, []);
 
+  const handleClientCreated = () => {
+    fetchClients();
+    setIsCreateClientOpen(false);
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -87,55 +90,20 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
       description: "",
       priority: "medium",
       category: "other",
-      client_id: "",
+      client_id: initialClientId || "",
       tags: "",
     },
   });
 
-  const processImage = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      showError("Please upload an image file.");
-      return;
+  // Update client_id if initialClientId changes
+  useEffect(() => {
+    if (initialClientId) {
+      form.setValue("client_id", initialClientId);
     }
+  }, [initialClientId, form]);
 
-    setIsOcrLoading(true);
-    try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-
-      const base64Image = await base64Promise;
-      
-      const { data, error } = await supabase.functions.invoke('ocr-image', {
-        body: { image_base64: base64Image }
-      });
-
-      if (error) throw error;
-
-      const currentDesc = form.getValues("description");
-      const newDesc = currentDesc 
-        ? `${currentDesc}\n\n--- Extracted from Image ---\n${data.text}`
-        : data.text;
-      
-      form.setValue("description", newDesc);
-      showSuccess("Text extracted from image successfully!");
-      
-      // Automatically trigger classification if we have enough text now
-      if (newDesc.length >= 20) {
-        handleAIClassify(newDesc);
-      }
-    } catch (error) {
-      console.error("OCR error:", error);
-      showError("Failed to extract text from image.");
-    } finally {
-      setIsOcrLoading(false);
-    }
-  };
-
-  const handleAIClassify = async (customDesc?: string) => {
-    const description = customDesc || form.getValues("description");
+  const handleAIClassify = async () => {
+    const description = form.getValues("description");
     if (!description || description.length < 10) {
       showError("Please enter a longer description first.");
       return;
@@ -149,6 +117,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
 
       if (error) throw error;
 
+      // Update form fields with AI suggestions
       form.setValue("title", data.suggested_title);
       form.setValue("category", data.suggested_category);
       form.setValue("priority", data.suggested_priority);
@@ -162,28 +131,6 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
     } finally {
       setIsClassifying(false);
     }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) processImage(file);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processImage(file);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -221,20 +168,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
 
   return (
     <Form {...form}>
-      <form 
-        onSubmit={form.handleSubmit(onSubmit)} 
-        className="space-y-6"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {isDragging && (
-          <div className="absolute inset-0 z-50 bg-primary/10 backdrop-blur-sm flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-primary animate-in fade-in duration-200">
-            <UploadCloud className="h-16 w-16 text-primary animate-bounce mb-4" />
-            <p className="text-2xl font-bold text-primary">Drop image to extract text</p>
-          </div>
-        )}
-
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="client_id"
@@ -242,7 +176,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
             <FormItem>
               <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select IT Client</FormLabel>
               <div className="flex gap-2">
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl flex-1">
                       <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Choose a client"} />
@@ -257,6 +191,11 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
                         </div>
                       </SelectItem>
                     ))}
+                    {clients.length === 0 && !isLoadingClients && (
+                      <div className="p-2 text-sm text-muted-foreground text-center">
+                        No IT clients found. Please add one first.
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
                 
@@ -270,10 +209,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
                     <DialogHeader className="mb-6">
                       <DialogTitle className="text-2xl font-bold">Add New Client</DialogTitle>
                     </DialogHeader>
-                    <ClientForm onSuccess={() => {
-                      fetchClients();
-                      setIsCreateClientOpen(false);
-                    }} />
+                    <ClientForm onSuccess={handleClientCreated} />
                   </DialogContent>
                 </Dialog>
               </div>
@@ -289,66 +225,33 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <div className="flex justify-between items-end mb-2">
-                  <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</FormLabel>
-                  <div className="flex gap-2">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                    />
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isOcrLoading}
-                      className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary bg-white/5"
-                    >
-                      {isOcrLoading ? (
-                        <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Extracting...</>
-                      ) : (
-                        <><ImageIcon className="h-3 w-3 mr-2" /> Image to Text</>
-                      )}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleAIClassify()}
-                      disabled={isClassifying || !field.value || field.value.length < 10}
-                      className={cn(
-                        "h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
-                        field.value && field.value.length >= 10 
-                          ? "text-primary bg-primary/10 hover:bg-primary/20" 
-                          : "text-muted-foreground opacity-50"
-                      )}
-                    >
-                      {isClassifying ? (
-                        <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Analyzing...</>
-                      ) : (
-                        <><Sparkles className="h-3 w-3 mr-2" /> AI Enhance</>
-                      )}
-                    </Button>
-                  </div>
+                  <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Raw Description</FormLabel>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleAIClassify}
+                    disabled={isClassifying || !field.value || field.value.length < 10}
+                    className={cn(
+                      "h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
+                      field.value && field.value.length >= 10 
+                        ? "text-primary bg-primary/10 hover:bg-primary/20" 
+                        : "text-muted-foreground opacity-50"
+                    )}
+                  >
+                    {isClassifying ? (
+                      <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Analyzing...</>
+                    ) : (
+                      <><Sparkles className="h-3 w-3 mr-2" /> AI Enhance & Classify</>
+                    )}
+                  </Button>
                 </div>
                 <FormControl>
-                  <div className="relative">
-                    <Textarea 
-                      placeholder="Describe the issue or drop an image here..." 
-                      className="bg-white/5 border-white/10 min-h-[150px] rounded-xl resize-none focus:ring-primary p-6 text-lg font-light" 
-                      {...field} 
-                    />
-                    {isOcrLoading && (
-                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center rounded-xl">
-                        <div className="flex flex-col items-center gap-3">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                          <span className="text-xs font-bold uppercase tracking-widest text-white">Extracting Text...</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <Textarea 
+                    placeholder="Type the issue here... (e.g. 'My MacBook is running slow and I think I have a virus')" 
+                    className="bg-white/5 border-white/10 min-h-[120px] rounded-xl resize-none focus:ring-primary" 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -421,10 +324,55 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="estimated_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Estimated Hours (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.5"
+                    min="0"
+                    placeholder="e.g. 2.5" 
+                    {...field} 
+                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    className="bg-white/5 border-white/10 h-12 rounded-xl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="tags"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tags (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g. urgent, mac, backup" 
+                    {...field} 
+                    className="bg-white/5 border-white/10 h-12 rounded-xl"
+                  />
+                </FormControl>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Comma-separated tags
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <Button 
           type="submit" 
-          disabled={isSubmitting || isOcrLoading}
-          className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] transition-all"
+          disabled={isSubmitting}
+          className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/10 transition-all"
         >
           {isSubmitting ? (
             <>Creating... <Loader2 className="ml-2 h-4 w-4 animate-spin" /></>

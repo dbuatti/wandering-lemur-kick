@@ -205,6 +205,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                     <DialogTitle className="text-2xl font-bold">Create New Ticket</DialogTitle>
                   </DialogHeader>
                   <TicketForm 
+                    initialClientId={filter.client_id !== 'all' ? filter.client_id : undefined}
                     onTicketCreated={() => {
                       setIsCreateDialogOpen(false);
                       queryClient.invalidateQueries({ queryKey: ['tickets'] });
