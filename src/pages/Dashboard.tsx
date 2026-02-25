@@ -7,6 +7,7 @@ import DashboardStats from "@/components/dashboard/DashboardStats";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import QuickActions from "@/components/dashboard/QuickActions";
 import SystemHealth from "@/components/dashboard/SystemHealth";
+import CategoryChart from "@/components/dashboard/CategoryChart";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Shield, ArrowRight, UserCheck, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const Dashboard = () => {
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [myTickets, setMyTickets] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
 
   const fetchData = async () => {
     try {
@@ -33,12 +35,25 @@ const Dashboard = () => {
       
       const [clientsRes, ticketsRes, resolvedRes] = await Promise.all([
         supabase.from('clients').select('id', { count: 'exact' }),
-        supabase.from('tickets').select('id, actual_hours', { count: 'exact' }).neq('status', 'closed'),
+        supabase.from('tickets').select('id, actual_hours, category', { count: 'exact' }).neq('status', 'closed'),
         supabase.from('tickets').select('id', { count: 'exact' }).eq('status', 'resolved')
       ]);
 
       const totalHours = ticketsRes.data?.reduce((acc, t) => acc + (t.actual_hours || 0), 0) || 0;
 
+      // Process category data
+      const categories: Record<string, number> = {};
+      ticketsRes.data?.forEach(t => {
+        const cat = t.category || 'other';
+        categories[cat] = (categories[cat] || 0) + 1;
+      });
+      
+      const formattedCategories = Object.entries(categories).map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value
+      }));
+
+      setCategoryData(formattedCategories);
       setStats({
         totalClients: clientsRes.count || 0,
         activeTickets: ticketsRes.count || 0,
@@ -145,56 +160,52 @@ const Dashboard = () => {
 
             <div className="grid lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8 space-y-8">
-                <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
-                  <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <UserCheck className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-xl font-bold">My Workload</CardTitle>
-                    </div>
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                      {myTickets.length} Active
-                    </Badge>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {myTickets.length === 0 ? (
-                      <div className="p-12 text-center text-muted-foreground">
-                        No tickets currently assigned to you.
+                <div className="grid md:grid-cols-2 gap-8">
+                  <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
+                    <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <UserCheck className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-xl font-bold">My Workload</CardTitle>
                       </div>
-                    ) : (
-                      <div className="divide-y divide-white/5">
-                        {myTickets.map((ticket) => (
-                          <Link 
-                            key={ticket.id} 
-                            to={`/tickets/${ticket.id}`}
-                            className="p-6 hover:bg-white/[0.02] transition-colors flex items-center justify-between group"
-                          >
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className={cn(
-                                "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                                ticket.priority === 'urgent' ? "bg-red-500/10 text-red-500" : "bg-white/5 text-muted-foreground"
-                              )}>
-                                <Ticket className="h-5 w-5" />
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                        {myTickets.length} Active
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {myTickets.length === 0 ? (
+                        <div className="p-12 text-center text-muted-foreground">
+                          No tickets currently assigned to you.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-white/5">
+                          {myTickets.map((ticket) => (
+                            <Link 
+                              key={ticket.id} 
+                              to={`/tickets/${ticket.id}`}
+                              className="p-6 hover:bg-white/[0.02] transition-colors flex items-center justify-between group"
+                            >
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className={cn(
+                                  "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                                  ticket.priority === 'urgent' ? "bg-red-500/10 text-red-500" : "bg-white/5 text-muted-foreground"
+                                )}>
+                                  <Ticket className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-sm font-bold truncate group-hover:text-primary transition-colors">{ticket.title}</h4>
+                                  <p className="text-xs text-muted-foreground truncate">{ticket.client_display_name}</p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <h4 className="text-sm font-bold truncate group-hover:text-primary transition-colors">{ticket.title}</h4>
-                                <p className="text-xs text-muted-foreground truncate">{ticket.client_display_name}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4 ml-4">
-                              <Badge className={cn(
-                                "text-[10px] uppercase tracking-widest font-bold",
-                                ticket.priority === 'urgent' ? "bg-red-500" : "bg-slate-700"
-                              )}>
-                                {ticket.priority}
-                              </Badge>
                               <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  <CategoryChart data={categoryData} />
+                </div>
 
                 <RecentActivity activities={activities} />
               </div>
