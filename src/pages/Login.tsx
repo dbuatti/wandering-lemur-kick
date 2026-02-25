@@ -41,7 +41,8 @@ const Login = () => {
             },
           }}
           theme="dark"
-          providers={[]}
+          providers={['google']}
+          redirectTo={window.location.origin + '/tickets'}
         />
       </div>
     </div>
