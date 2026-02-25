@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import QuickActions from "@/components/dashboard/QuickActions";
+import SystemHealth from "@/components/dashboard/SystemHealth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Shield, ArrowRight, UserCheck, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,6 @@ const Dashboard = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Fetch Stats
       const [clientsRes, ticketsRes, resolvedRes] = await Promise.all([
         supabase.from('clients').select('id', { count: 'exact' }),
         supabase.from('tickets').select('id, actual_hours', { count: 'exact' }).neq('status', 'closed'),
@@ -46,7 +46,6 @@ const Dashboard = () => {
         resolvedTickets: resolvedRes.count || 0
       });
 
-      // Fetch My Tickets
       if (user) {
         const { data: assignedTickets } = await supabase
           .from('tickets')
@@ -60,7 +59,6 @@ const Dashboard = () => {
         setMyTickets(assignedTickets || []);
       }
 
-      // Fetch Recent Activity
       const { data: recentTickets } = await supabase
         .from('tickets')
         .select('id, title, client_display_name, created_at, status')
@@ -106,7 +104,6 @@ const Dashboard = () => {
       <main className="flex-grow pt-32 pb-20">
         <div className="w-full px-6 md:px-12">
           <div className="w-full">
-            {/* Header */}
             <div className="mb-12">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
                 <Shield className="h-3 w-3 text-primary" />
@@ -142,15 +139,12 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Stats Grid */}
             <div className="mb-12">
               <DashboardStats stats={stats} />
             </div>
 
-            {/* Main Content Grid */}
             <div className="grid lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8 space-y-8">
-                {/* My Workload Section */}
                 <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
                   <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -204,8 +198,9 @@ const Dashboard = () => {
 
                 <RecentActivity activities={activities} />
               </div>
-              <div className="lg:col-span-4">
+              <div className="lg:col-span-4 space-y-8">
                 <QuickActions />
+                <SystemHealth />
               </div>
             </div>
           </div>
