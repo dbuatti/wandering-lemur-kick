@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +15,10 @@ serve(async (req) => {
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
-    return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+      status: 401, 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    })
   }
 
   try {
@@ -32,7 +34,11 @@ serve(async (req) => {
     console.log("[classify-ticket] Analyzing description...");
 
     if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+      console.error("[classify-ticket] GEMINI_API_KEY is missing");
+      return new Response(JSON.stringify({ error: "AI service not configured. Please set GEMINI_API_KEY." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
     }
 
     const prompt = `
@@ -53,7 +59,8 @@ serve(async (req) => {
       }
     `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // Using gemini-1.5-flash for better stability
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +79,15 @@ serve(async (req) => {
     
     if (!response.ok) {
       console.error("[classify-ticket] Gemini API error:", result);
-      throw new Error("Failed to get response from Gemini");
+      return new Response(JSON.stringify({ error: "Gemini API error", details: result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 502,
+      })
+    }
+
+    if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
+      console.error("[classify-ticket] Unexpected Gemini response format:", result);
+      throw new Error("Invalid response from AI service");
     }
 
     const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text);
@@ -82,7 +97,7 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
-    console.error("[classify-ticket] Error:", error);
+    console.error("[classify-ticket] Internal error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
