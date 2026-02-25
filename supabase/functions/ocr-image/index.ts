@@ -32,7 +32,7 @@ serve(async (req) => {
     }
 
     if (!GEMINI_API_KEY) {
-      console.error("[ocr-image] GEMINI_API_KEY is missing from environment variables");
+      console.error("[ocr-image] GEMINI_API_KEY is missing");
       return new Response(JSON.stringify({ error: "AI service not configured. Please set GEMINI_API_KEY." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -41,7 +41,6 @@ serve(async (req) => {
 
     console.log("[ocr-image] Processing image for text extraction...");
 
-    // Extract the base64 data and mime type
     const parts = image_base64.split(',');
     const base64Data = parts.length > 1 ? parts[1] : parts[0];
     const mimeTypeMatch = image_base64.match(/data:([^;]+);base64/);
@@ -49,7 +48,7 @@ serve(async (req) => {
 
     const prompt = "Extract all text from this image. If it's a screenshot of a technical issue, an error message, or a handwritten note, transcribe it exactly as it appears. Return only the transcribed text, nothing else.";
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

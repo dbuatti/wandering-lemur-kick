@@ -30,7 +30,6 @@ serve(async (req) => {
     
     console.log("[analyze-ticket] Processing request for ticket:", ticket_id);
 
-    // 1. Check if we already have a saved analysis and we're not forcing a refresh
     if (!force_refresh) {
       const { data: existingAnalysis } = await supabase
         .from('ticket_ai_analyses')
@@ -47,7 +46,6 @@ serve(async (req) => {
       }
     }
 
-    // 2. Generate new analysis with Gemini
     if (!GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is not configured");
     }
@@ -72,7 +70,7 @@ serve(async (req) => {
       }
     `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,7 +94,6 @@ serve(async (req) => {
 
     const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text);
 
-    // 3. Persist the analysis to the database
     const { data: savedData, error: saveError } = await supabase
       .from('ticket_ai_analyses')
       .upsert({
@@ -111,7 +108,6 @@ serve(async (req) => {
 
     if (saveError) {
       console.error("[analyze-ticket] Error saving analysis:", saveError);
-      // We still return the AI response even if saving failed
       return new Response(JSON.stringify({ ...aiResponse, timestamp: new Date().toISOString() }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
