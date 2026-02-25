@@ -11,10 +11,10 @@ const QuickActions = () => {
   const navigate = useNavigate();
 
   const actions = [
-    { label: "New Ticket", icon: <Plus className="h-4 w-4" />, onClick: () => navigate('/tickets?action=new'), color: "bg-primary" },
-    { label: "Add Client", icon: <UserPlus className="h-4 w-4" />, onClick: () => navigate('/clients?action=new'), color: "bg-blue-500" },
-    { label: "Security Audit", icon: <Shield className="h-4 w-4" />, onClick: () => navigate('/tickets?category=security'), color: "bg-green-500" },
-    { label: "Optimization", icon: <Zap className="h-4 w-4" />, onClick: () => navigate('/tickets?category=optimization'), color: "bg-purple-500" },
+    { label: "New Ticket", icon: <Plus className="h-4 w-4" />, onClick: () => navigate('/tickets'), color: "bg-primary" },
+    { label: "Add Client", icon: <UserPlus className="h-4 w-4" />, onClick: () => navigate('/clients'), color: "bg-blue-500" },
+    { label: "Security Audit", icon: <Shield className="h-4 w-4" />, onClick: () => navigate('/tickets'), color: "bg-green-500" },
+    { label: "Optimization", icon: <Zap className="h-4 w-4" />, onClick: () => navigate('/tickets'), color: "bg-purple-500" },
   ];
 
   return (
