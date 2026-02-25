@@ -1,10 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Send, Loader2, ShieldAlert, User, Clock, History } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Send, 
+  Loader2, 
+  ShieldAlert, 
+  Clock, 
+  History, 
+  Image as ImageIcon, 
+  X,
+  Paperclip
+} from "lucide-react";
 import { format } from "date-fns";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +33,9 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
   const [isInternal, setIsInternal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchComments = async () => {
     try {
@@ -45,16 +57,64 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setAttachments(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadAttachments = async (): Promise<string[]> => {
+    if (attachments.length === 0) return [];
+    
+    setUploadingImages(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of attachments) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${ticketId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('ticket-attachments')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('ticket-attachments')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      showError("Failed to upload images");
+      return [];
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const addComment = async () => {
-    if (!commentText.trim() || !user) return;
+    if ((!commentText.trim() && attachments.length === 0) || !user) return;
 
     setIsSubmitting(true);
     try {
+      const uploadedUrls = await uploadAttachments();
+      
       const { data, error } = await supabase.functions.invoke('add-ticket-comment', {
         body: {
           ticket_id: ticketId,
           content: commentText,
-          is_internal: isInternal
+          is_internal: isInternal,
+          attachments: uploadedUrls
         }
       });
 
@@ -67,12 +127,14 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
           email: user.email
         },
         created_at: new Date().toISOString(),
-        is_internal: isInternal
+        is_internal: isInternal,
+        attachments: uploadedUrls
       };
 
       setComments(prev => [newComment, ...prev]);
       setIsInternal(false);
       setCommentText('');
+      setAttachments([]);
       showSuccess("Comment added");
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -129,14 +191,56 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
             />
-            <div className="flex justify-end">
+            
+            {/* Attachments Preview */}
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
+                {attachments.map((file, index) => (
+                  <div key={index} className="relative group h-20 w-20 rounded-lg overflow-hidden border border-white/10">
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt="preview" 
+                      className="h-full w-full object-cover"
+                    />
+                    <button 
+                      onClick={() => removeAttachment(index)}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2">
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-muted-foreground hover:text-primary h-10 px-4 rounded-xl border border-white/5"
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" /> Add Images
+                </Button>
+              </div>
+              
               <Button
                 type="button"
                 onClick={addComment}
-                disabled={isSubmitting || !commentText.trim()}
+                disabled={isSubmitting || (!commentText.trim() && attachments.length === 0)}
                 className="h-12 px-8 rounded-xl bg-primary text-white hover:bg-primary/90 font-bold transition-all"
               >
-                {isSubmitting ? (
+                {isSubmitting || uploadingImages ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>Post Update <Send className="ml-2 h-4 w-4" /></>
@@ -187,7 +291,30 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
                     ? "bg-blue-500/[0.03] border-blue-500/10 text-blue-100/80" 
                     : "bg-white/[0.02] border-white/5 text-muted-foreground"
                 )}>
-                  {comment.content}
+                  {comment.content && <div className="mb-4">{comment.content}</div>}
+                  
+                  {comment.attachments && comment.attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      {comment.attachments.map((url: string, i: number) => (
+                        <a 
+                          key={i} 
+                          href={url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="relative h-32 w-32 rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all group"
+                        >
+                          <img 
+                            src={url} 
+                            alt="attachment" 
+                            className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Paperclip className="h-5 w-5 text-white" />
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
