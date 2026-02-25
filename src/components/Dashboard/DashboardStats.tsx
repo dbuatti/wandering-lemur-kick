@@ -7,7 +7,6 @@ import {
   Ticket, 
   Clock, 
   CheckCircle2, 
-  TrendingUp,
   ArrowUpRight,
   ArrowDownRight
 } from "lucide-react";
