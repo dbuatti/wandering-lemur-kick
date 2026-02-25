@@ -1,11 +1,12 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,38 +20,58 @@ serve(async (req) => {
 
   try {
     const { title, description, comments } = await req.json()
-    console.log("[analyze-ticket] Analyzing ticket:", title);
+    console.log("[analyze-ticket] Analyzing ticket with Gemini:", title);
 
-    // In a production environment, you would call an LLM API here (OpenAI, Anthropic, etc.)
-    // For this implementation, we simulate the AI analysis logic
-    
-    const commentText = comments?.map((c: any) => c.content).join("\n") || "";
-    const fullContext = `Title: ${title}\nDescription: ${description}\nComments: ${commentText}`;
-
-    // Simulated AI Logic:
-    // 1. Identify core problem
-    // 2. Suggest technical steps based on keywords
-    
-    let problemSummary = "The user is reporting an issue regarding " + title.toLowerCase() + ". ";
-    if (description.length > 50) {
-      problemSummary += "The primary concern involves " + description.substring(0, 100) + "...";
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
-    let suggestedSolution = "Based on the context, I recommend the following steps:\n\n";
+    const commentText = comments?.map((c: any) => `${c.is_internal ? '[Internal]' : '[Public]'} ${c.content}`).join("\n") || "No comments yet.";
     
-    if (fullContext.toLowerCase().includes("security") || fullContext.toLowerCase().includes("password")) {
-      suggestedSolution += "1. Audit account access logs.\n2. Reset primary credentials.\n3. Verify 2FA status.";
-    } else if (fullContext.toLowerCase().includes("sync") || fullContext.toLowerCase().includes("icloud")) {
-      suggestedSolution += "1. Check iCloud storage limits.\n2. Sign out and back into the Apple ID.\n3. Verify network stability.";
-    } else {
-      suggestedSolution += "1. Perform a full system diagnostic.\n2. Check for recent software updates.\n3. Verify hardware integrity.";
+    const prompt = `
+      You are an expert IT Support Specialist and Security Auditor. 
+      Analyze the following support ticket and provide a concise summary and a suggested technical solution.
+      
+      Ticket Title: ${title}
+      Description: ${description}
+      
+      Activity Log:
+      ${commentText}
+      
+      Return your response in JSON format with exactly these keys:
+      {
+        "summary": "A 1-2 sentence summary of the core problem",
+        "solution": "A step-by-step technical solution or next steps",
+        "confidence": 0.95
+      }
+    `;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
+      })
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error("[analyze-ticket] Gemini API error:", result);
+      throw new Error("Failed to get response from Gemini");
     }
 
-    // Return the analysis
+    const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+
     return new Response(JSON.stringify({
-      summary: problemSummary,
-      solution: suggestedSolution,
-      confidence: 0.85,
+      ...aiResponse,
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
