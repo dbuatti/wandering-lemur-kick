@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Filter, Plus, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Search, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,9 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import TicketCard from "./TicketCard";
+import TicketForm from "./TicketForm";
 import { supabase } from "@/integrations/supabase/client";
-import { showSuccess, showError } from "@/utils/toast";
+import { showError } from "@/utils/toast";
 
 interface TicketListProps {
   initialFilter?: {
@@ -29,6 +36,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [filter, setFilter] = useState({
     status: initialFilter?.status || '',
     priority: initialFilter?.priority || '',
@@ -117,19 +125,32 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   );
 
   return (
-    <Card>
+    <Card className="bg-card border-white/10">
       <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
           <CardTitle className="text-2xl font-bold">Tickets</CardTitle>
           <p className="text-muted-foreground">Manage and track all client issues</p>
         </div>
-        <Button className="h-10" onClick={() => {
-          // This would open a modal to create a new ticket
-          showSuccess("Create ticket modal would open here");
-        }}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Ticket
-        </Button>
+        
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="h-10 bg-primary text-white hover:bg-primary/90">
+              <Plus className="h-4 w-4 mr-2" />
+              New Ticket
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2rem]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">Create New Ticket</DialogTitle>
+            </DialogHeader>
+            <TicketForm 
+              onTicketCreated={() => {
+                setIsCreateDialogOpen(false);
+                fetchTickets(true);
+              }} 
+            />
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -139,17 +160,17 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
               placeholder="Search tickets..."
               value={searchTerm}
               onChange={handleSearch}
-              className="pl-10 bg-white/5 border-white/10"
+              className="pl-10 bg-white/5 border-white/10 h-11 rounded-xl"
             />
           </div>
           
           <div className="flex gap-2">
             <Select onValueChange={(value) => handleFilterChange('status', value)} value={filter.status}>
-              <SelectTrigger className="bg-white/5 border-white/10 w-32">
+              <SelectTrigger className="bg-white/5 border-white/10 w-32 h-11 rounded-xl">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="bg-card border-white/10">
-                <SelectItem value="">All</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
@@ -159,29 +180,15 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
             </Select>
 
             <Select onValueChange={(value) => handleFilterChange('priority', value)} value={filter.priority}>
-              <SelectTrigger className="bg-white/5 border-white/10 w-32">
+              <SelectTrigger className="bg-white/5 border-white/10 w-32 h-11 rounded-xl">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent className="bg-card border-white/10">
-                <SelectItem value="">All</SelectItem>
+                <SelectItem value="all">All Priority</SelectItem>
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
                 <SelectItem value="high">High</SelectItem>
                 <SelectItem value="urgent">Urgent</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={(value) => handleFilterChange('category', value)} value={filter.category}>
-              <SelectTrigger className="bg-white/5 border-white/10 w-32">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-white/10">
-                <SelectItem value="">All</SelectItem>
-                <SelectItem value="security">Security</SelectItem>
-                <SelectItem value="setup">Setup</SelectItem>
-                <SelectItem value="optimization">Optimization</SelectItem>
-                <SelectItem value="recovery">Recovery</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -192,7 +199,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredTickets.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-muted-foreground border border-dashed border-white/10 rounded-2xl">
             No tickets found. Create your first ticket to get started!
           </div>
         ) : (
@@ -210,7 +217,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
 
         {hasMore && !isLoading && !isFetching && (
           <div className="flex justify-center mt-8">
-            <Button onClick={loadMore} variant="outline" className="h-10">
+            <Button onClick={loadMore} variant="outline" className="h-10 rounded-xl border-white/10 hover:bg-white/5">
               Load More
             </Button>
           </div>

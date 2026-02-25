@@ -3,11 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, User, Tag, AlertCircle, CheckCircle2, ArrowRight, MessageSquare, MoreHorizontal } from "lucide-react";
+import { Clock, User, MessageSquare, MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface TicketCardProps {
   ticket: {
@@ -32,11 +33,12 @@ interface TicketCardProps {
 
 const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
 
   const priorityColors = {
-    low: "bg-gray-500",
+    low: "bg-slate-500",
     medium: "bg-yellow-500",
     high: "bg-orange-500",
     urgent: "bg-red-500"
@@ -45,9 +47,9 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
   const statusColors = {
     open: "bg-blue-500",
     in_progress: "bg-purple-500",
-    pending: "bg-gray-500",
+    pending: "bg-slate-500",
     resolved: "bg-green-500",
-    closed: "bg-gray-500"
+    closed: "bg-slate-700"
   };
 
   const categoryLabels = {
@@ -58,10 +60,11 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
     other: "Other"
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (e: React.MouseEvent, newStatus: string) => {
+    e.stopPropagation();
     try {
       setIsAssigning(true);
-      const { data, error } = await supabase.functions.invoke('update-ticket-status', {
+      const { error } = await supabase.functions.invoke('update-ticket-status', {
         body: {
           ticket_id: ticket.id,
           status: newStatus
@@ -73,8 +76,9 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
       onStatusChange(ticket.id, newStatus);
       toast({
         title: "Ticket updated",
-        description: `Status changed to ${newStatus}`,
+        description: `Status changed to ${newStatus.replace('_', ' ')}`,
       });
+      setIsMenuOpen(false);
     } catch (error) {
       console.error("Error updating ticket status:", error);
       toast({
@@ -87,14 +91,17 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
     }
   };
 
-  const handleAssign = async (userId: string | null) => {
+  const handleAssign = async (e: React.MouseEvent, userId: string | null) => {
+    e.stopPropagation();
     try {
       setIsAssigning(true);
-      const { data, error } = await supabase.functions.invoke('update-ticket-status', {
+      // In a real app, we'd pass the actual user ID. For now, we'll use the edge function to handle assignment.
+      const { error } = await supabase.functions.invoke('update-ticket-status', {
         body: {
           ticket_id: ticket.id,
           status: ticket.status,
-          actual_hours: ticket.actual_hours
+          // This is a simplification for the demo
+          assigned_to: userId
         }
       });
 
@@ -103,8 +110,9 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
       onAssign(ticket.id, userId);
       toast({
         title: "Ticket assigned",
-        description: userId ? "Ticket assigned to you" : "Ticket unassigned",
+        description: userId ? "Ticket assigned successfully" : "Ticket unassigned",
       });
+      setIsMenuOpen(false);
     } catch (error) {
       console.error("Error assigning ticket:", error);
       toast({
@@ -118,56 +126,55 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card 
+      className="bg-white/5 border-white/10 hover:border-primary/30 transition-all duration-300 cursor-pointer group"
+      onClick={() => navigate(`/tickets/${ticket.id}`)}
+    >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="flex-1">
-          <CardTitle className="text-lg font-bold line-clamp-2">{ticket.title}</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{ticket.description}</p>
+          <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors">{ticket.title}</CardTitle>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{ticket.description}</p>
         </div>
         <div className="relative">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="h-8 w-8 rounded-full hover:bg-white/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMenuOpen(!isMenuOpen);
+            }}
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
           {isMenuOpen && (
-            <div className="absolute right-0 top-10 z-10 w-48 rounded-md border bg-popover p-1 shadow-lg">
+            <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-card p-1 shadow-2xl">
               <div className="py-1">
                 <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-accent"
-                  onClick={() => handleStatusChange('in_progress')}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={(e) => handleStatusChange(e, 'in_progress')}
                   disabled={ticket.status === 'in_progress'}
                 >
-                  {ticket.status === 'in_progress' ? 'In Progress' : 'Start Work'}
+                  Start Work
                 </button>
                 <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-accent"
-                  onClick={() => handleStatusChange('pending')}
-                  disabled={ticket.status === 'pending'}
-                >
-                  {ticket.status === 'pending' ? 'Pending' : 'Mark Pending'}
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-accent"
-                  onClick={() => handleStatusChange('resolved')}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={(e) => handleStatusChange(e, 'resolved')}
                   disabled={ticket.status === 'resolved'}
                 >
-                  {ticket.status === 'resolved' ? 'Resolved' : 'Mark Resolved'}
+                  Mark Resolved
                 </button>
                 <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-accent"
-                  onClick={() => handleStatusChange('closed')}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={(e) => handleStatusChange(e, 'closed')}
                   disabled={ticket.status === 'closed'}
                 >
-                  {ticket.status === 'closed' ? 'Closed' : 'Close Ticket'}
+                  Close Ticket
                 </button>
-                <div className="border-t my-1"></div>
+                <div className="border-t border-white/10 my-1"></div>
                 <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-accent"
-                  onClick={() => handleAssign(ticket.assigned_to ? null : 'me')}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={(e) => handleAssign(e, ticket.assigned_to ? null : 'current_user')}
                   disabled={isAssigning}
                 >
                   {ticket.assigned_to ? 'Unassign' : 'Assign to Me'}
@@ -179,53 +186,48 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2 mb-4">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase tracking-wider font-bold">
             {categoryLabels[ticket.category]}
           </Badge>
-          <Badge className={`${priorityColors[ticket.priority]} text-white`}>
-            {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
+          <Badge className={`${priorityColors[ticket.priority]} text-white text-[10px] uppercase tracking-wider font-bold`}>
+            {ticket.priority}
           </Badge>
-          <Badge className={`${statusColors[ticket.status]} text-white`}>
-            {ticket.status.replace('_', ' ').toUpperCase()}
+          <Badge className={`${statusColors[ticket.status]} text-white text-[10px] uppercase tracking-wider font-bold`}>
+            {ticket.status.replace('_', ' ')}
           </Badge>
-          {ticket.tags && ticket.tags.map((tag, index) => (
-            <Badge key={index} variant="outline" className="bg-secondary/10 text-secondary border-secondary/20">
-              {tag}
-            </Badge>
-          ))}
         </div>
 
-        <div className="space-y-2 text-sm">
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center text-muted-foreground">
-            <User className="h-4 w-4 mr-2" />
-            {ticket.client_display_name || 'Unknown Client'}
+            <User className="h-4 w-4 mr-2 text-primary/60" />
+            <span className="truncate">{ticket.client_display_name || 'Unknown Client'}</span>
           </div>
           <div className="flex items-center text-muted-foreground">
-            <Clock className="h-4 w-4 mr-2" />
-            Created: {format(new Date(ticket.created_at), 'MMM d, yyyy')}
+            <Clock className="h-4 w-4 mr-2 text-primary/60" />
+            {format(new Date(ticket.created_at), 'MMM d')}
           </div>
-          {ticket.estimated_hours && (
-            <div className="flex items-center text-muted-foreground">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Est. {ticket.estimated_hours}h
-            </div>
-          )}
-          {ticket.actual_hours && (
-            <div className="flex items-center text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Actual: {ticket.actual_hours}h
-            </div>
-          )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-border">
+        <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+          <div className="flex -space-x-2">
+            {ticket.tags && ticket.tags.slice(0, 3).map((tag, index) => (
+              <div key={index} className="h-6 px-2 rounded-full bg-white/5 border border-white/10 text-[10px] flex items-center text-muted-foreground">
+                #{tag}
+              </div>
+            ))}
+            {ticket.tags && ticket.tags.length > 3 && (
+              <div className="h-6 px-2 rounded-full bg-white/5 border border-white/10 text-[10px] flex items-center text-muted-foreground">
+                +{ticket.tags.length - 3}
+              </div>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="text-primary hover:text-primary/80"
+            className="text-primary hover:text-primary/80 h-8 px-2"
           >
             <MessageSquare className="h-4 w-4 mr-1" />
-            View Comments
+            Details
           </Button>
         </div>
       </CardContent>
