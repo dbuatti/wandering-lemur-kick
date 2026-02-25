@@ -37,7 +37,6 @@ import {
 import TicketCard from "./TicketCard";
 import TicketForm from "./TicketForm";
 import { supabase } from "@/integrations/supabase/client";
-import { showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 
 interface TicketListProps {
@@ -65,7 +64,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     client_id: clientIdParam || initialFilter?.client_id || 'all',
   });
 
-  const { data: tickets = [], isLoading, isFetching, refetch } = useQuery({
+  const { data: tickets = [], isLoading } = useQuery({
     queryKey: ['tickets', filter],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-tickets', {
@@ -74,14 +73,14 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
           priority: filter.priority === 'all' ? undefined : filter.priority,
           category: filter.category === 'all' ? undefined : filter.category,
           client_id: filter.client_id === 'all' ? undefined : filter.client_id,
-          limit: 100, // Fetch a larger batch for the list
+          limit: 100,
         }
       });
 
       if (error) throw error;
       return data || [];
     },
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
   });
 
   const stats = useMemo(() => {

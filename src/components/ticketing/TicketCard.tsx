@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, User, MessageSquare, MoreHorizontal, Hash, Trash2, Copy, CheckCircle2 } from "lucide-react";
+import { Clock, User, MoreHorizontal, Hash, Trash2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { showSuccess, showError } from "@/utils/toast";

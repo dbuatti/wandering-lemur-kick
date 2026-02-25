@@ -1,9 +1,9 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import TicketComments from "@/components/Ticketing/TicketComments";
-import TicketTimeLog from "@/components/Ticketing/TicketTimeLog";
-import TicketAIAnalysis from "@/components/Ticketing/TicketAIAnalysis";
+import TicketComments from "@/components/ticketing/TicketComments";
+import TicketTimeLog from "@/components/ticketing/TicketTimeLog";
+import TicketAIAnalysis from "@/components/ticketing/TicketAIAnalysis";
 import Footer from "@/components/Footer";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";

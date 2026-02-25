@@ -136,7 +136,6 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
     }
 
     if (hasImage) {
-      // Prevent default to avoid browser trying to paste the image as text/html
       e.preventDefault();
       addFiles(files);
     }
@@ -243,8 +242,6 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
     setIsSubmitting(true);
     try {
       const selectedClient = clients.find(c => c.id === values.client_id);
-      
-      // Temporary ID for storage path
       const tempId = Math.random().toString(36).substring(7);
       const uploadedUrls = await uploadAttachments(tempId);
       
@@ -388,7 +385,6 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
             )}
           />
 
-          {/* Attachments Preview */}
           {attachments.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
               {attachments.map((item, index) => (

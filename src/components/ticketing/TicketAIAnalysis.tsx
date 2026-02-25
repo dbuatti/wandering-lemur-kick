@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Sparkles, Loader2, BrainCircuit, Lightbulb, CheckCircle2, RefreshCw, Save, FileText } from "lucide-react";
+import { Sparkles, BrainCircuit, Lightbulb, CheckCircle2, RefreshCw, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ const TicketAIAnalysis = ({ ticket, comments }: TicketAIAnalysisProps) => {
 
   const fetchSavedAnalysis = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('ticket_ai_analyses')
         .select('*')
         .eq('ticket_id', ticket.id)

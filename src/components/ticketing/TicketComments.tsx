@@ -125,8 +125,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error("Upload error details:", uploadError);
-          throw new Error(`Failed to upload ${file.name}. Make sure the 'ticket-attachments' bucket exists.`);
+          throw new Error(`Failed to upload ${file.name}.`);
         }
 
         const { data: { publicUrl } } = supabase.storage
@@ -155,7 +154,6 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
       
       if (attachments.length > 0) {
         uploadedUrls = await uploadAttachments();
-        // If we had attachments but none uploaded successfully, stop here
         if (uploadedUrls.length === 0 && attachments.length > 0) {
           setIsSubmitting(false);
           return;
@@ -220,7 +218,6 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
         </Badge>
       </div>
 
-      {/* Comment Input */}
       <Card 
         className={cn(
           "bg-white/[0.02] border-white/10 rounded-[2rem] overflow-hidden transition-all duration-300",
@@ -262,7 +259,6 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
               onPaste={handlePaste}
             />
             
-            {/* Attachments Preview */}
             {attachments.length > 0 && (
               <div className="flex flex-wrap gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
                 {attachments.map((file, index) => (
@@ -321,7 +317,6 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
         </CardContent>
       </Card>
 
-      {/* Timeline */}
       <div className="relative pl-8 space-y-12 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-white/10">
         {isLoading ? (
           <div className="flex justify-center py-12">
@@ -332,7 +327,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
             No activity recorded yet.
           </div>
         ) : (
-          comments.map((comment, idx) => (
+          comments.map((comment) => (
             <div key={comment.id} className="relative">
               <div className={cn(
                 "absolute -left-[25px] top-0 h-5 w-5 rounded-full border-4 border-background z-10",

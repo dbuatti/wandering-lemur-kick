@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import TicketList from "@/components/Ticketing/TicketList";
+import TicketList from "@/components/ticketing/TicketList";
 import ClientAssetList from "@/components/clients/ClientAssetList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

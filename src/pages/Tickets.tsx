@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import TicketList from "@/components/Ticketing/TicketList";
+import TicketList from "@/components/ticketing/TicketList";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Ticket, ArrowRight } from "lucide-react";
