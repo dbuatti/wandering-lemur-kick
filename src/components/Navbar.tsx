@@ -11,10 +11,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import BookingDialog from "./BookingDialog";
+import { useLocation, Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,19 +27,19 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Security", href: "#security" },
-    { name: "Clean Sweep", href: "#clean-sweep" },
-    { name: "Tiers", href: "#tiers" },
-    { name: "Contact", href: "#contact" },
+    { name: "Security", href: "/#security" },
+    { name: "Clean Sweep", href: "/#clean-sweep" },
+    { name: "Tiers", href: "/#tiers" },
+    { name: "Clients", href: "/clients" },
     { name: "Tickets", href: "/tickets" },
   ];
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-4 bg-black/80 backdrop-blur-lg border-b border-white/10" : "py-6 lg:py-8 bg-transparent"}`}>
       <div className="container px-6 mx-auto flex justify-between items-center">
-        <div className="text-lg lg:text-xl font-bold tracking-tighter">
+        <Link to="/" className="text-lg lg:text-xl font-bold tracking-tighter">
           DANIELE <span className="text-primary">BUATTI</span>
-        </div>
+        </Link>
         
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-10">
@@ -45,7 +47,7 @@ const Navbar = () => {
             <a 
               key={link.name} 
               href={link.href} 
-              className={`nav-link ${link.href === '/tickets' ? 'text-primary' : ''}`}
+              className={`nav-link ${location.pathname === link.href ? 'text-primary' : ''}`}
             >
               {link.name}
             </a>
@@ -82,7 +84,7 @@ const Navbar = () => {
                   <a 
                     key={link.name} 
                     href={link.href} 
-                    className={`text-2xl font-bold hover:text-primary transition-colors ${link.href === '/tickets' ? 'text-primary' : ''}`}
+                    className={`text-2xl font-bold hover:text-primary transition-colors ${location.pathname === link.href ? 'text-primary' : ''}`}
                     onClick={() => setIsOpen(false)}
                   >
                     {link.name}
