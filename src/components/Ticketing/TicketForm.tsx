@@ -24,7 +24,15 @@ import {
 } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, UserPlus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import ClientForm from "@/components/clients/ClientForm";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -44,13 +52,14 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
         const { data, error } = await supabase
           .from('clients')
-          .select('id, display_name, email, phone')
+          .select('id, display_name, email, phone, type')
           .order('display_name', { ascending: true });
 
         if (error) throw error;
@@ -64,6 +73,25 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
 
     fetchClients();
   }, []);
+
+  const handleClientCreated = () => {
+    // Refresh clients list
+    const fetchClients = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('id, display_name, email, phone, type')
+          .order('display_name', { ascending: true });
+
+        if (error) throw error;
+        setClients(data || []);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+      }
+    };
+    fetchClients();
+    setIsCreateClientOpen(false);
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -99,7 +127,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
 
       if (error) throw error;
 
-      showSuccess("Ticket created successfully!");
+      showSuccess(`Ticket #${data.ticket_number || data.id.slice(0, 8)} created successfully!`);
       form.reset();
       onTicketCreated?.(data.id);
     } catch (error) {
@@ -119,25 +147,44 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Client / Company</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
-                    <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Choose a client"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-card border-white/10">
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.display_name}
-                    </SelectItem>
-                  ))}
-                  {clients.length === 0 && !isLoadingClients && (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      No clients found. Please add one first.
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl flex-1">
+                      <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Choose a client"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-card border-white/10">
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{client.display_name}</span>
+                          <span className="text-xs text-muted-foreground">({client.type})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    {clients.length === 0 && !isLoadingClients && (
+                      <div className="p-2 text-sm text-muted-foreground text-center">
+                        No clients found. Please add one first.
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                
+                <Dialog open={isCreateClientOpen} onOpenChange={setIsCreateClientOpen}>
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="outline" className="h-12 px-4 rounded-xl border-white/10">
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+                    <DialogHeader className="mb-6">
+                      <DialogTitle className="text-2xl font-bold">Add New Client</DialogTitle>
+                    </DialogHeader>
+                    <ClientForm onClientCreated={handleClientCreated} />
+                  </DialogContent>
+                </Dialog>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -165,7 +212,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
               <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Describe the issue or service required..." 
+                  placeholder="Describe the issue or service required in detail..." 
                   className="bg-white/5 border-white/10 min-h-[120px] rounded-xl resize-none" 
                   {...field} 
                 />
@@ -226,10 +273,55 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="estimated_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Estimated Hours (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.5"
+                    min="0"
+                    placeholder="e.g. 2.5" 
+                    {...field} 
+                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    className="bg-white/5 border-white/10 h-12 rounded-xl"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="tags"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tags (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g. urgent, mac, backup" 
+                    {...field} 
+                    className="bg-white/5 border-white/10 h-12 rounded-xl"
+                  />
+                </FormControl>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Comma-separated tags
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <Button 
           type="submit" 
           disabled={isSubmitting}
-          className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] transition-all"
+          className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/10 transition-all"
         >
           {isSubmitting ? (
             <>Creating... <Loader2 className="ml-2 h-4 w-4 animate-spin" /></>

@@ -29,6 +29,7 @@ serve(async (req) => {
     let query = supabase
       .from('tickets')
       .select('*')
+      .order('ticket_number DESC', { ascending: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
