@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PlusCircle, UserPlus, Sparkles, Wand2, ShieldCheck } from "lucide-react";
+import { Loader2, PlusCircle, UserPlus, Sparkles, Wand2, ShieldCheck, Image as ImageIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +53,7 @@ interface TicketFormProps {
 const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
@@ -62,7 +63,7 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
       const { data, error } = await supabase
         .from('clients')
         .select('id, display_name, email, phone, type')
-        .eq('is_it_client', true) // Only show IT clients for tickets
+        .eq('is_it_client', true)
         .order('display_name', { ascending: true });
 
       if (error) throw error;
@@ -95,7 +96,6 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
     },
   });
 
-  // Update client_id if initialClientId changes
   useEffect(() => {
     if (initialClientId) {
       form.setValue("client_id", initialClientId);
@@ -117,7 +117,6 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
 
       if (error) throw error;
 
-      // Update form fields with AI suggestions
       form.setValue("title", data.suggested_title);
       form.setValue("category", data.suggested_category);
       form.setValue("priority", data.suggested_priority);
@@ -130,6 +129,52 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
       showError("Failed to classify ticket with AI.");
     } finally {
       setIsClassifying(false);
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    let imageFile: File | null = null;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        imageFile = items[i].getAsFile();
+        break;
+      }
+    }
+
+    if (imageFile) {
+      setIsOcrLoading(true);
+      try {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(imageFile!);
+        });
+
+        const base64Image = await base64Promise;
+        
+        const { data, error } = await supabase.functions.invoke('ocr-image', {
+          body: { image_base64: base64Image }
+        });
+
+        if (error) throw error;
+
+        if (data.text) {
+          const currentDesc = form.getValues("description");
+          const newDesc = currentDesc 
+            ? `${currentDesc}\n\n[Extracted from Image]:\n${data.text}`
+            : `[Extracted from Image]:\n${data.text}`;
+          
+          form.setValue("description", newDesc);
+          showSuccess("Text extracted from image successfully");
+        }
+      } catch (error) {
+        console.error("OCR error:", error);
+        showError("Failed to extract text from image");
+      } finally {
+        setIsOcrLoading(false);
+      }
     }
   };
 
@@ -225,7 +270,10 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <div className="flex justify-between items-end mb-2">
-                  <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Raw Description</FormLabel>
+                  <div className="flex flex-col gap-1">
+                    <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Raw Description</FormLabel>
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">Paste images to extract text</span>
+                  </div>
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -247,11 +295,23 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
                   </Button>
                 </div>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Type the issue here... (e.g. 'My MacBook is running slow and I think I have a virus')" 
-                    className="bg-white/5 border-white/10 min-h-[120px] rounded-xl resize-none focus:ring-primary" 
-                    {...field} 
-                  />
+                  <div className="relative">
+                    <Textarea 
+                      placeholder="Type the issue here... (e.g. 'My MacBook is running slow and I think I have a virus')" 
+                      className={cn(
+                        "bg-white/5 border-white/10 min-h-[120px] rounded-xl resize-none focus:ring-primary transition-all",
+                        isOcrLoading && "opacity-50 grayscale"
+                      )}
+                      onPaste={handlePaste}
+                      {...field} 
+                    />
+                    {isOcrLoading && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 rounded-xl backdrop-blur-[2px]">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Extracting text...</span>
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
