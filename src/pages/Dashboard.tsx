@@ -7,7 +7,7 @@ import DashboardStats from "@/components/dashboard/DashboardStats";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import QuickActions from "@/components/dashboard/QuickActions";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, LayoutDashboard, Shield, ArrowRight, UserCheck, Ticket } from "lucide-react";
+import { Loader2, Shield, ArrowRight, UserCheck, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
