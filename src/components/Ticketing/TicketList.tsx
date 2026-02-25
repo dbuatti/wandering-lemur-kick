@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -15,7 +16,6 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  Calendar,
   TrendingUp,
   X
 } from "lucide-react";
@@ -34,7 +34,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import TicketCard from "./TicketCard";
 import TicketForm from "./TicketForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,10 +51,9 @@ interface TicketListProps {
 
 const TicketList = ({ initialFilter }: TicketListProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const clientIdParam = searchParams.get('client');
   
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -66,80 +64,42 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     category: initialFilter?.category || 'all',
     client_id: clientIdParam || initialFilter?.client_id || 'all',
   });
-  
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [isFetching, setIsFetching] = useState(false);
 
-  const fetchTickets = async (reset = false) => {
-    if (isFetching) return;
-    
-    setIsFetching(true);
-    try {
+  const { data: tickets = [], isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['tickets', filter],
+    queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-tickets', {
         body: {
           status: filter.status === 'all' ? undefined : filter.status,
           priority: filter.priority === 'all' ? undefined : filter.priority,
           category: filter.category === 'all' ? undefined : filter.category,
           client_id: filter.client_id === 'all' ? undefined : filter.client_id,
-          limit: 12,
-          offset: reset ? 0 : page * 12,
+          limit: 100, // Fetch a larger batch for the list
         }
       });
 
       if (error) throw error;
-
-      if (reset) {
-        setTickets(data || []);
-      } else {
-        setTickets(prev => [...prev, ...(data || [])]);
-      }
-      
-      setHasMore(data?.length === 12);
-    } catch (error) {
-      console.error("Error fetching tickets:", error);
-      showError("Failed to load tickets");
-    } finally {
-      setIsFetching(false);
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTickets(true);
-  }, [filter]);
-
-  // Sync filter with URL param
-  useEffect(() => {
-    if (clientIdParam && clientIdParam !== filter.client_id) {
-      setFilter(prev => ({ ...prev, client_id: clientIdParam }));
-    }
-  }, [clientIdParam]);
+      return data || [];
+    },
+    staleTime: 1000 * 60, // 1 minute
+  });
 
   const stats = useMemo(() => {
     return {
       total: tickets.length,
-      open: tickets.filter(t => t.status === 'open').length,
-      inProgress: tickets.filter(t => t.status === 'in_progress').length,
-      resolved: tickets.filter(t => t.status === 'resolved').length,
-      overdue: tickets.filter(t => {
+      open: tickets.filter((t: any) => t.status === 'open').length,
+      inProgress: tickets.filter((t: any) => t.status === 'in_progress').length,
+      resolved: tickets.filter((t: any) => t.status === 'resolved').length,
+      overdue: tickets.filter((t: any) => {
         const daysOpen = Math.ceil((Date.now() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24));
         return daysOpen > 7 && t.status !== 'resolved' && t.status !== 'closed';
       }).length,
     };
   }, [tickets]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
   const handleFilterChange = (key: string, value: string) => {
     setFilter(prev => ({ ...prev, [key]: value }));
-    setPage(0);
-    setTickets([]);
-    setHasMore(true);
     
-    // Clear URL param if client filter is changed manually
     if (key === 'client_id' && value === 'all') {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('client');
@@ -147,29 +107,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     }
   };
 
-  const handleStatusChange = (ticketId: string, status: string) => {
-    setTickets(prev => 
-      prev.map(ticket => 
-        ticket.id === ticketId ? { ...ticket, status } : ticket
-      )
-    );
-  };
-
-  const handleAssign = (ticketId: string, userId: string | null) => {
-    setTickets(prev => 
-      prev.map(ticket => 
-        ticket.id === ticketId ? { ...ticket, assigned_to: userId } : ticket
-      )
-    );
-  };
-
-  const loadMore = () => {
-    if (!hasMore || isFetching) return;
-    setPage(prev => prev + 1);
-    fetchTickets();
-  };
-
-  const filteredTickets = tickets.filter(ticket =>
+  const filteredTickets = tickets.filter((ticket: any) =>
     ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.client_display_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -184,24 +122,22 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   const hasActiveFilters = filter.status !== 'all' || filter.priority !== 'all' || filter.category !== 'all' || filter.client_id !== 'all' || searchTerm;
 
   const statCards = [
-    { id: 'all', label: "Total", value: stats.total, icon: <BarChart3 className="h-4 w-4" />, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
-    { id: 'open', label: "Open", value: stats.open, icon: <AlertCircle className="h-4 w-4" />, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-    { id: 'in_progress', label: "In Progress", value: stats.inProgress, icon: <Clock className="h-4 w-4" />, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-    { id: 'resolved', label: "Resolved", value: stats.resolved, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
-    { id: 'overdue', label: "Overdue", value: stats.overdue, icon: <TrendingUp className="h-4 w-4" />, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+    { id: 'all', label: "Total", value: stats.total, icon: <BarChart3 className="h-4 w-4" />, color: "text-primary", bg: "bg-primary/10" },
+    { id: 'open', label: "Open", value: stats.open, icon: <AlertCircle className="h-4 w-4" />, color: "text-blue-400", bg: "bg-blue-500/10" },
+    { id: 'in_progress', label: "In Progress", value: stats.inProgress, icon: <Clock className="h-4 w-4" />, color: "text-purple-400", bg: "bg-purple-500/10" },
+    { id: 'resolved', label: "Resolved", value: stats.resolved, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-400", bg: "bg-green-500/10" },
+    { id: 'overdue', label: "Overdue", value: stats.overdue, icon: <TrendingUp className="h-4 w-4" />, color: "text-orange-400", bg: "bg-orange-500/10" },
   ];
 
   return (
     <div className="space-y-8">
-      {/* Interactive Stats Dashboard */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {statCards.map((stat) => (
           <Card 
             key={stat.id} 
             className={cn(
               "bg-white/5 border-white/10 overflow-hidden relative group cursor-pointer transition-all hover:scale-[1.02]",
-              filter.status === stat.id && "border-primary/50 bg-primary/5 ring-1 ring-primary/20",
-              stat.id === 'all' && filter.status === 'all' && "border-primary/50 bg-primary/5"
+              (filter.status === stat.id || (stat.id === 'all' && filter.status === 'all')) && "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
             )}
             onClick={() => handleFilterChange('status', stat.id)}
           >
@@ -241,7 +177,6 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                     viewMode === 'grid' ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-white"
                   )}
                   onClick={() => setViewMode('grid')}
-                  title="Grid view"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
@@ -253,7 +188,6 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                     viewMode === 'list' ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-white"
                   )}
                   onClick={() => setViewMode('list')}
-                  title="List view"
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -273,7 +207,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                   <TicketForm 
                     onTicketCreated={() => {
                       setIsCreateDialogOpen(false);
-                      fetchTickets(true);
+                      queryClient.invalidateQueries({ queryKey: ['tickets'] });
                     }} 
                   />
                 </DialogContent>
@@ -287,10 +221,10 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tickets by title, client, or description..."
+                placeholder="Search tickets..."
                 value={searchTerm}
-                onChange={handleSearch}
-                className="pl-11 bg-white/5 border-white/10 h-12 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-11 bg-white/5 border-white/10 h-12 rounded-xl focus:ring-2 focus:ring-primary"
               />
             </div>
             
@@ -312,22 +246,6 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 h-12">
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                <Select onValueChange={(value) => handleFilterChange('priority', value)} value={filter.priority}>
-                  <SelectTrigger className="border-none bg-transparent focus:ring-0 w-[130px] h-full p-0">
-                    <SelectValue placeholder="Priority" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-white/10">
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {hasActiveFilters && (
                 <Button 
                   variant="ghost" 
@@ -344,13 +262,8 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-6">
-              <div className="relative">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></div>
-              </div>
-              <div className="text-center">
-                <p className="text-muted-foreground font-medium">Loading tickets...</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Please wait while we sync your data</p>
-              </div>
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-muted-foreground font-medium">Loading tickets...</p>
             </div>
           ) : filteredTickets.length === 0 ? (
             <div className="text-center py-24 border border-dashed border-white/10 rounded-[2rem] bg-white/[0.01]">
@@ -359,56 +272,22 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
               </div>
               <h3 className="text-2xl font-bold mb-3">No tickets found</h3>
               <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                {tickets.length === 0 
-                  ? "Get started by creating your first support ticket." 
-                  : "Try adjusting your search or filters to find what you're looking for."}
+                Try adjusting your search or filters to find what you're looking for.
               </p>
-              {tickets.length === 0 && (
-                <Button 
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="rounded-full px-8"
-                >
-                  Create Your First Ticket
-                </Button>
-              )}
             </div>
           ) : (
-            <>
-              <div className={viewMode === 'grid' 
-                ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" 
-                : "space-y-4"
-              }>
-                {filteredTickets.map((ticket) => (
-                  <TicketCard
-                    key={ticket.id}
-                    ticket={ticket}
-                    viewMode={viewMode}
-                    onStatusChange={handleStatusChange}
-                    onAssign={handleAssign}
-                    onDelete={(id) => setTickets(prev => prev.filter(t => t.id !== id))}
-                  />
-                ))}
-              </div>
-
-              {hasMore && !isLoading && !isFetching && (
-                <div className="flex justify-center mt-12">
-                  <Button 
-                    onClick={loadMore} 
-                    variant="outline" 
-                    className="h-12 rounded-xl border-white/10 hover:bg-white/5 hover:border-primary/30 px-8 font-bold transition-all group"
-                  >
-                    <Loader2 className="mr-2 h-4 w-4 group-hover:animate-spin" />
-                    Load More
-                  </Button>
-                </div>
-              )}
-
-              {isFetching && (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              )}
-            </>
+            <div className={viewMode === 'grid' ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
+              {filteredTickets.map((ticket: any) => (
+                <TicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  viewMode={viewMode}
+                  onStatusChange={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
+                  onAssign={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
+                  onDelete={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
+                />
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

@@ -6,47 +6,67 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, User, MessageSquare, MoreHorizontal, Hash, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 interface TicketCardProps {
-  ticket: {
-    id: string;
-    ticket_number?: number;
-    title: string;
-    description: string;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    status: 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
-    category: 'security' | 'setup' | 'optimization' | 'recovery' | 'other';
-    created_at: string;
-    updated_at: string;
-    client_display_name: string;
-    owner_user_id: string;
-    assigned_to: string | null;
-    estimated_hours: number | null;
-    actual_hours: number | null;
-    tags: string[];
-  };
+  ticket: any;
   viewMode?: 'grid' | 'list';
-  onStatusChange: (ticketId: string, status: string) => void;
-  onAssign: (ticketId: string, userId: string | null) => void;
+  onStatusChange?: (ticketId: string, status: string) => void;
+  onAssign?: (ticketId: string, userId: string | null) => void;
   onDelete?: (ticketId: string) => void;
 }
 
 const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDelete }: TicketCardProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const priorityColors = {
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke('delete-ticket', {
+        body: { ticket_id: ticket.id }
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      showSuccess("Ticket deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      onDelete?.(ticket.id);
+      setIsMenuOpen(false);
+    },
+    onError: (error: any) => {
+      console.error("Error deleting ticket:", error);
+      showError("Failed to delete ticket. Check database permissions.");
+    }
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      const { error } = await supabase.functions.invoke('update-ticket-status', {
+        body: { ticket_id: ticket.id, status: newStatus }
+      });
+      if (error) throw error;
+      return newStatus;
+    },
+    onSuccess: (newStatus) => {
+      showSuccess(`Status changed to ${newStatus.replace('_', ' ')}`);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      onStatusChange?.(ticket.id, newStatus);
+      setIsMenuOpen(false);
+    }
+  });
+
+  const priorityColors: any = {
     low: "bg-slate-500",
     medium: "bg-yellow-500",
     high: "bg-orange-500",
     urgent: "bg-red-500"
   };
 
-  const statusColors = {
+  const statusColors: any = {
     open: "bg-blue-500",
     in_progress: "bg-purple-500",
     pending: "bg-slate-500",
@@ -54,83 +74,10 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
     closed: "bg-slate-700"
   };
 
-  const categoryLabels = {
-    security: "Security",
-    setup: "Setup",
-    optimization: "Optimization",
-    recovery: "Recovery",
-    other: "Other"
-  };
-
-  const handleStatusChange = async (e: React.MouseEvent, newStatus: string) => {
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      setIsActionLoading(true);
-      const { error } = await supabase.functions.invoke('update-ticket-status', {
-        body: {
-          ticket_id: ticket.id,
-          status: newStatus
-        }
-      });
-
-      if (error) throw error;
-
-      onStatusChange(ticket.id, newStatus);
-      showSuccess(`Status changed to ${newStatus.replace('_', ' ')}`);
-      setIsMenuOpen(false);
-    } catch (error) {
-      console.error("Error updating ticket status:", error);
-      showError("Failed to update ticket status");
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this ticket?")) return;
-    
-    try {
-      setIsActionLoading(true);
-      const { error } = await supabase.functions.invoke('delete-ticket', {
-        body: { ticket_id: ticket.id }
-      });
-
-      if (error) throw error;
-
-      showSuccess("Ticket deleted");
-      onDelete?.(ticket.id);
-      setIsMenuOpen(false);
-    } catch (error) {
-      console.error("Error deleting ticket:", error);
-      showError("Failed to delete ticket");
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const handleAssign = async (e: React.MouseEvent, userId: string | null) => {
-    e.stopPropagation();
-    try {
-      setIsActionLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      const targetUserId = userId === 'current_user' ? user?.id : userId;
-
-      const { error } = await supabase
-        .from('tickets')
-        .update({ assigned_to: targetUserId, updated_at: new Date().toISOString() })
-        .eq('id', ticket.id);
-
-      if (error) throw error;
-
-      onAssign(ticket.id, targetUserId);
-      showSuccess(targetUserId ? "Ticket assigned successfully" : "Ticket unassigned");
-      setIsMenuOpen(false);
-    } catch (error) {
-      console.error("Error assigning ticket:", error);
-      showError("Failed to assign ticket");
-    } finally {
-      setIsActionLoading(false);
+    if (confirm("Are you sure you want to delete this ticket?")) {
+      deleteMutation.mutate();
     }
   };
 
@@ -150,7 +97,6 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
             </span>
           </div>
           <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors">{ticket.title}</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{ticket.description}</p>
         </div>
         <div className="relative">
           <Button
@@ -169,31 +115,23 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
               <div className="py-1">
                 <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleStatusChange(e, 'in_progress')}
-                  disabled={ticket.status === 'in_progress' || isActionLoading}
+                  onClick={(e) => { e.stopPropagation(); statusMutation.mutate('in_progress'); }}
+                  disabled={statusMutation.isPending}
                 >
                   Start Work
                 </button>
                 <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleStatusChange(e, 'resolved')}
-                  disabled={ticket.status === 'resolved' || isActionLoading}
+                  onClick={(e) => { e.stopPropagation(); statusMutation.mutate('resolved'); }}
+                  disabled={statusMutation.isPending}
                 >
                   Mark Resolved
                 </button>
                 <div className="border-t border-white/10 my-1"></div>
                 <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleAssign(e, ticket.assigned_to ? null : 'current_user')}
-                  disabled={isActionLoading}
-                >
-                  {ticket.assigned_to ? 'Unassign' : 'Assign to Me'}
-                </button>
-                <div className="border-t border-white/10 my-1"></div>
-                <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
                   onClick={handleDelete}
-                  disabled={isActionLoading}
+                  disabled={deleteMutation.isPending}
                 >
                   <div className="flex items-center">
                     <Trash2 className="h-3 w-3 mr-2" /> Delete
@@ -206,18 +144,18 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2 mb-4">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase tracking-wider font-bold">
-            {categoryLabels[ticket.category]}
-          </Badge>
           <Badge className={`${priorityColors[ticket.priority]} text-white text-[10px] uppercase tracking-wider font-bold`}>
             {ticket.priority}
+          </Badge>
+          <Badge variant="outline" className="bg-white/5 text-muted-foreground border-white/10 text-[10px] uppercase tracking-wider font-bold">
+            {ticket.status.replace('_', ' ')}
           </Badge>
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center text-muted-foreground">
             <User className="h-4 w-4 mr-2 text-primary/60" />
-            <span className="truncate">{ticket.client_display_name || 'Unknown Client'}</span>
+            <span className="truncate">{ticket.client_display_name || 'Unknown'}</span>
           </div>
           <div className="flex items-center text-muted-foreground">
             <Clock className="h-4 w-4 mr-2 text-primary/60" />
@@ -234,13 +172,8 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
               </div>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary hover:text-primary/80 h-8 px-2"
-          >
-            <MessageSquare className="h-4 w-4 mr-1" />
-            Details
+          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 h-8 px-2">
+            <MessageSquare className="h-4 w-4 mr-1" /> Details
           </Button>
         </div>
       </CardContent>
