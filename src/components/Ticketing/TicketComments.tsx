@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Send, Loader2, ShieldAlert } from "lucide-react";
+import { MessageSquare, Send, Loader2, ShieldAlert, User, Clock, History } from "lucide-react";
 import { format } from "date-fns";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/components/AuthProvider";
+import { cn } from "@/lib/utils";
 
 interface TicketCommentsProps {
   ticketId: string;
@@ -59,7 +60,6 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
 
       if (error) throw error;
 
-      // Optimistically add the comment to the list
       const newComment = {
         id: data.comment_id,
         content: commentText,
@@ -89,58 +89,25 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
   }, [ticketId]);
 
   return (
-    <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
-      <CardHeader className="border-b border-white/5 pb-6">
-        <CardTitle className="flex items-center text-xl font-bold">
-          <MessageSquare className="h-5 w-5 mr-3 text-primary" />
-          Activity Log
-          <Badge variant="secondary" className="ml-3 bg-white/10 text-white rounded-full">
-            {comments.length}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-8">
-        <div className="space-y-8 mb-10">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : comments.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground border border-dashed border-white/10 rounded-2xl">
-              No comments yet. Start the conversation below.
-            </div>
-          ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className={`flex gap-4 ${comment.is_internal ? 'opacity-80' : ''}`}>
-                <div className="flex-shrink-0">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm ${comment.is_internal ? 'bg-blue-500/20 text-blue-400' : 'bg-primary/20 text-primary'}`}>
-                    {comment.user?.email?.charAt(0).toUpperCase() || '?'}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm">{comment.user?.email || 'Unknown User'}</span>
-                      {comment.is_internal && (
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[9px] uppercase tracking-widest font-bold px-2 py-0">
-                          Internal
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                      {format(new Date(comment.created_at), 'MMM d, h:mm a')}
-                    </span>
-                  </div>
-                  <div className={`p-4 rounded-2xl text-sm leading-relaxed ${comment.is_internal ? 'bg-blue-500/5 border border-blue-500/10 text-blue-100' : 'bg-white/5 border border-white/5'}`}>
-                    {comment.content}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <History className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold">Activity Log</h3>
+            <p className="text-sm text-muted-foreground">Timeline of updates and communications.</p>
+          </div>
         </div>
+        <Badge variant="secondary" className="bg-white/5 text-muted-foreground border-white/10 px-3 py-1 rounded-full">
+          {comments.length} Events
+        </Badge>
+      </div>
 
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+      {/* Comment Input */}
+      <Card className="bg-white/[0.02] border-white/10 rounded-[2rem] overflow-hidden">
+        <CardContent className="p-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -153,33 +120,81 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
                 Internal Note <ShieldAlert className="h-3 w-3" />
               </label>
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Press Enter to send</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Markdown supported</span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-4">
             <Textarea
               placeholder="Add a comment or internal note..."
-              className="bg-black/20 border-white/10 rounded-xl resize-none flex-1 min-h-[80px] focus:ring-primary"
+              className="bg-black/20 border-white/10 rounded-2xl resize-none min-h-[120px] focus:ring-primary p-6 text-lg font-light"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  addComment();
-                }
-              }}
             />
-            <Button
-              type="button"
-              onClick={addComment}
-              disabled={isSubmitting || !commentText.trim()}
-              className="h-auto px-6 rounded-xl bg-primary text-white hover:bg-primary/90"
-            >
-              {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={addComment}
+                disabled={isSubmitting || !commentText.trim()}
+                className="h-12 px-8 rounded-xl bg-primary text-white hover:bg-primary/90 font-bold transition-all"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>Post Update <Send className="ml-2 h-4 w-4" /></>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Timeline */}
+      <div className="relative pl-8 space-y-12 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-white/10">
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground border border-dashed border-white/10 rounded-[2rem] bg-white/[0.01]">
+            No activity recorded yet.
+          </div>
+        ) : (
+          comments.map((comment, idx) => (
+            <div key={comment.id} className="relative">
+              <div className={cn(
+                "absolute -left-[25px] top-0 h-5 w-5 rounded-full border-4 border-background z-10",
+                comment.is_internal ? "bg-blue-500" : "bg-primary"
+              )} />
+              
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-sm">{comment.user?.email?.split('@')[0] || 'System'}</span>
+                    {comment.is_internal && (
+                      <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[9px] uppercase tracking-widest font-bold px-2 py-0">
+                        Internal
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-widest">
+                    <Clock className="h-3 w-3" />
+                    {format(new Date(comment.created_at), 'MMM d, h:mm a')}
+                  </div>
+                </div>
+                
+                <div className={cn(
+                  "p-6 rounded-2xl text-sm leading-relaxed border transition-all",
+                  comment.is_internal 
+                    ? "bg-blue-500/[0.03] border-blue-500/10 text-blue-100/80" 
+                    : "bg-white/[0.02] border-white/5 text-muted-foreground"
+                )}>
+                  {comment.content}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 };
 

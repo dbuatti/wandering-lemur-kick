@@ -3,12 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, User, MessageSquare, MoreHorizontal } from "lucide-react";
+import { Clock, User, MessageSquare, MoreHorizontal, ChevronRight, Calendar, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface TicketCardProps {
   ticket: {
@@ -27,37 +28,30 @@ interface TicketCardProps {
     actual_hours: number | null;
     tags: string[];
   };
+  viewMode?: 'grid' | 'list';
   onStatusChange: (ticketId: string, status: string) => void;
   onAssign: (ticketId: string, userId: string | null) => void;
 }
 
-const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
+const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign }: TicketCardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
 
   const priorityColors = {
-    low: "bg-slate-500",
-    medium: "bg-yellow-500",
-    high: "bg-orange-500",
-    urgent: "bg-red-500"
+    low: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+    medium: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+    high: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    urgent: "bg-red-500/10 text-red-400 border-red-500/20"
   };
 
   const statusColors = {
-    open: "bg-blue-500",
-    in_progress: "bg-purple-500",
-    pending: "bg-slate-500",
-    resolved: "bg-green-500",
-    closed: "bg-slate-700"
-  };
-
-  const categoryLabels = {
-    security: "Security",
-    setup: "Setup",
-    optimization: "Optimization",
-    recovery: "Recovery",
-    other: "Other"
+    open: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    in_progress: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    pending: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+    resolved: "bg-green-500/10 text-green-400 border-green-500/20",
+    closed: "bg-slate-700/10 text-slate-500 border-slate-700/20"
   };
 
   const handleStatusChange = async (e: React.MouseEvent, newStatus: string) => {
@@ -91,144 +85,108 @@ const TicketCard = ({ ticket, onStatusChange, onAssign }: TicketCardProps) => {
     }
   };
 
-  const handleAssign = async (e: React.MouseEvent, userId: string | null) => {
-    e.stopPropagation();
-    try {
-      setIsAssigning(true);
-      // In a real app, we'd pass the actual user ID. For now, we'll use the edge function to handle assignment.
-      const { error } = await supabase.functions.invoke('update-ticket-status', {
-        body: {
-          ticket_id: ticket.id,
-          status: ticket.status,
-          // This is a simplification for the demo
-          assigned_to: userId
-        }
-      });
+  if (viewMode === 'list') {
+    return (
+      <div 
+        className="group flex items-center gap-6 p-4 bg-white/[0.02] border border-white/5 hover:border-primary/30 hover:bg-white/[0.04] rounded-2xl transition-all cursor-pointer"
+        onClick={() => navigate(`/tickets/${ticket.id}`)}
+      >
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+          {ticket.client_display_name?.charAt(0) || 'T'}
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-1">
+            <h3 className="font-bold truncate group-hover:text-primary transition-colors">{ticket.title}</h3>
+            <Badge variant="outline" className={cn("text-[9px] uppercase tracking-widest font-bold px-2 py-0", statusColors[ticket.status])}>
+              {ticket.status.replace('_', ' ')}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <User className="h-3 w-3" /> {ticket.client_display_name}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" /> {format(new Date(ticket.created_at), 'MMM d')}
+            </span>
+          </div>
+        </div>
 
-      if (error) throw error;
+        <div className="hidden md:flex items-center gap-3">
+          <Badge variant="outline" className={cn("text-[9px] uppercase tracking-widest font-bold px-2 py-0", priorityColors[ticket.priority])}>
+            {ticket.priority}
+          </Badge>
+          <Badge variant="outline" className="text-[9px] uppercase tracking-widest font-bold px-2 py-0 bg-white/5 border-white/10 text-muted-foreground">
+            {ticket.category}
+          </Badge>
+        </div>
 
-      onAssign(ticket.id, userId);
-      toast({
-        title: "Ticket assigned",
-        description: userId ? "Ticket assigned successfully" : "Ticket unassigned",
-      });
-      setIsMenuOpen(false);
-    } catch (error) {
-      console.error("Error assigning ticket:", error);
-      toast({
-        title: "Error",
-        description: "Failed to assign ticket",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAssigning(false);
-    }
-  };
+        <div className="flex-shrink-0">
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card 
-      className="bg-white/5 border-white/10 hover:border-primary/30 transition-all duration-300 cursor-pointer group"
+      className="bg-white/[0.02] border-white/10 hover:border-primary/30 hover:bg-white/[0.04] transition-all duration-500 cursor-pointer group relative overflow-hidden rounded-[2rem]"
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <div className="flex-1">
-          <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors">{ticket.title}</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{ticket.description}</p>
-        </div>
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full hover:bg-white/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMenuOpen(!isMenuOpen);
-            }}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-          {isMenuOpen && (
-            <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-card p-1 shadow-2xl">
-              <div className="py-1">
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleStatusChange(e, 'in_progress')}
-                  disabled={ticket.status === 'in_progress'}
-                >
-                  Start Work
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleStatusChange(e, 'resolved')}
-                  disabled={ticket.status === 'resolved'}
-                >
-                  Mark Resolved
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleStatusChange(e, 'closed')}
-                  disabled={ticket.status === 'closed'}
-                >
-                  Close Ticket
-                </button>
-                <div className="border-t border-white/10 my-1"></div>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleAssign(e, ticket.assigned_to ? null : 'current_user')}
-                  disabled={isAssigning}
-                >
-                  {ticket.assigned_to ? 'Unassign' : 'Assign to Me'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase tracking-wider font-bold">
-            {categoryLabels[ticket.category]}
-          </Badge>
-          <Badge className={`${priorityColors[ticket.priority]} text-white text-[10px] uppercase tracking-wider font-bold`}>
-            {ticket.priority}
-          </Badge>
-          <Badge className={`${statusColors[ticket.status]} text-white text-[10px] uppercase tracking-wider font-bold`}>
+      <div className={cn("absolute top-0 left-0 w-full h-1", ticket.priority === 'urgent' ? 'bg-red-500' : 'bg-transparent')} />
+      
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start mb-4">
+          <Badge variant="outline" className={cn("text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1 rounded-full", statusColors[ticket.status])}>
             {ticket.status.replace('_', ' ')}
           </Badge>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center text-muted-foreground">
-            <User className="h-4 w-4 mr-2 text-primary/60" />
-            <span className="truncate">{ticket.client_display_name || 'Unknown Client'}</span>
-          </div>
-          <div className="flex items-center text-muted-foreground">
-            <Clock className="h-4 w-4 mr-2 text-primary/60" />
-            {format(new Date(ticket.created_at), 'MMM d')}
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={cn("text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1 rounded-full", priorityColors[ticket.priority])}>
+              {ticket.priority}
+            </Badge>
           </div>
         </div>
+        <CardTitle className="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+          {ticket.title}
+        </CardTitle>
+      </CardHeader>
 
-        <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
-          <div className="flex -space-x-2">
-            {ticket.tags && ticket.tags.slice(0, 3).map((tag, index) => (
-              <div key={index} className="h-6 px-2 rounded-full bg-white/5 border border-white/10 text-[10px] flex items-center text-muted-foreground">
-                #{tag}
+      <CardContent>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-6 font-light leading-relaxed">
+          {ticket.description}
+        </p>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                {ticket.client_display_name?.charAt(0)}
               </div>
-            ))}
-            {ticket.tags && ticket.tags.length > 3 && (
-              <div className="h-6 px-2 rounded-full bg-white/5 border border-white/10 text-[10px] flex items-center text-muted-foreground">
-                +{ticket.tags.length - 3}
-              </div>
-            )}
+              <span className="font-medium text-white/80">{ticket.client_display_name}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{format(new Date(ticket.created_at), 'MMM d, yyyy')}</span>
+            </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary hover:text-primary/80 h-8 px-2"
-          >
-            <MessageSquare className="h-4 w-4 mr-1" />
-            Details
-          </Button>
+
+          <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+            <div className="flex gap-2">
+              {ticket.tags && ticket.tags.slice(0, 2).map((tag, i) => (
+                <span key={i} className="text-[10px] text-muted-foreground flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                  <Tag className="h-2.5 w-2.5" /> {tag}
+                </span>
+              ))}
+              {ticket.tags && ticket.tags.length > 2 && (
+                <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                  +{ticket.tags.length - 2}
+                </span>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" className="h-8 text-primary hover:text-primary hover:bg-primary/10 rounded-xl font-bold text-xs">
+              View Details <ChevronRight className="ml-1 h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
