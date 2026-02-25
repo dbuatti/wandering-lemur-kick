@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PlusCircle, UserPlus, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, PlusCircle, UserPlus, Sparkles, Wand2, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +61,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
       const { data, error } = await supabase
         .from('clients')
         .select('id, display_name, email, phone, type')
+        .eq('is_it_client', true) // Only show IT clients for tickets
         .order('display_name', { ascending: true });
 
       if (error) throw error;
@@ -165,7 +166,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
           name="client_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Client / Company</FormLabel>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select IT Client</FormLabel>
               <div className="flex gap-2">
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
@@ -178,13 +179,13 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
                       <SelectItem key={client.id} value={client.id}>
                         <div className="flex items-center gap-2">
                           <span>{client.display_name}</span>
-                          <span className="text-xs text-muted-foreground">({client.type})</span>
+                          <span className="text-[10px] text-primary font-bold uppercase tracking-tighter bg-primary/10 px-1.5 rounded">IT</span>
                         </div>
                       </SelectItem>
                     ))}
                     {clients.length === 0 && !isLoadingClients && (
                       <div className="p-2 text-sm text-muted-foreground text-center">
-                        No clients found. Please add one first.
+                        No IT clients found. Please add one first.
                       </div>
                     )}
                   </SelectContent>

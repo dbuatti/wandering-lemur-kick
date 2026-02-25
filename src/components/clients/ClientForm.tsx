@@ -12,18 +12,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, ShieldCheck } from "lucide-react";
 
 const formSchema = z.object({
   display_name: z.string().min(2, "Name is required"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   phone: z.string().optional(),
   is_company: z.boolean().default(false),
+  is_it_client: z.boolean().default(true),
   job_title: z.string().optional(),
 });
 
@@ -41,6 +44,7 @@ const ClientForm = ({ onSuccess }: ClientFormProps) => {
       email: "",
       phone: "",
       is_company: false,
+      is_it_client: true,
       job_title: "",
     },
   });
@@ -111,23 +115,45 @@ const ClientForm = ({ onSuccess }: ClientFormProps) => {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="is_company"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 bg-white/5 rounded-xl border border-white/10">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="text-sm font-bold">This is a company</FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="is_company"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-sm font-bold">Company Account</FormLabel>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="is_it_client"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/20">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-sm font-bold flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-primary" /> IT Client
+                  </FormLabel>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button type="submit" disabled={isSubmitting} className="w-full h-14 rounded-xl bg-primary text-white font-bold">
           {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Add Client</>}
