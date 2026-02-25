@@ -2,14 +2,6 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +21,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInternal, setIsInternal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [commentText, setCommentText] = useState('');
 
   const fetchComments = async () => {
     try {
@@ -77,6 +70,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
 
       setComments([newComment, ...comments]);
       setIsInternal(false);
+      setCommentText('');
       showSuccess("Comment added successfully!");
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -143,46 +137,32 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
               Internal Note (not visible to client)
             </label>
           </div>
-          <Form>
-            <div className="flex gap-2">
-              <FormField
-                control={{} as any}
-                name="comment"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormControl>
-                      <Textarea
-                        placeholder="Add a comment..."
-                        className="bg-white/5 border-white/10 resize-none"
-                        {...field}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            addComment(field.value);
-                            field.value = '';
-                          }
-                        }}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="button"
-                onClick={() => {
-                  const textarea = document.querySelector('textarea');
-                  if (textarea) {
-                    addComment((textarea as HTMLTextAreaElement).value);
-                    (textarea as HTMLTextAreaElement).value = '';
-                  }
-                }}
-                disabled={isSubmitting}
-                className="h-10"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </Form>
+          <div className="flex gap-2">
+            <Textarea
+              placeholder="Add a comment..."
+              className="bg-white/5 border-white/10 resize-none flex-1"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  addComment(commentText);
+                }
+              }}
+            />
+            <Button
+              type="button"
+              onClick={() => {
+                if (commentText.trim()) {
+                  addComment(commentText);
+                }
+              }}
+              disabled={isSubmitting || !commentText.trim()}
+              className="h-10"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
