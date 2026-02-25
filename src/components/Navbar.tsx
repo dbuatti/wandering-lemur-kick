@@ -29,6 +29,7 @@ const Navbar = () => {
     { name: "Clean Sweep", href: "#clean-sweep" },
     { name: "Tiers", href: "#tiers" },
     { name: "Contact", href: "#contact" },
+    { name: "Tickets", href: "/tickets" },
   ];
 
   return (
@@ -41,7 +42,11 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-10">
           {navLinks.map((link) => (
-            <a key={link.name} href={link.href} className="nav-link">
+            <a 
+              key={link.name} 
+              href={link.href} 
+              className={`nav-link ${link.href === '/tickets' ? 'text-primary' : ''}`}
+            >
               {link.name}
             </a>
           ))}
@@ -77,7 +82,7 @@ const Navbar = () => {
                   <a 
                     key={link.name} 
                     href={link.href} 
-                    className="text-2xl font-bold hover:text-primary transition-colors"
+                    className={`text-2xl font-bold hover:text-primary transition-colors ${link.href === '/tickets' ? 'text-primary' : ''}`}
                     onClick={() => setIsOpen(false)}
                   >
                     {link.name}
