@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TicketList from "@/components/ticketing/TicketList";
 import ClientAssetList from "@/components/clients/ClientAssetList";
+import SecurityHealth from "@/components/clients/SecurityHealth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +22,7 @@ import {
   Briefcase,
   Ticket,
   Database,
-  ExternalLink
+  Activity
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
@@ -189,23 +190,16 @@ const ClientDetail = () => {
                         </div>
                       </div>
                     </div>
-
-                    <div className="mt-12 pt-10 border-t border-white/5">
-                      <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest mb-6">
-                        <Shield className="h-4 w-4" /> Security Status
-                      </div>
-                      <div className="p-6 rounded-3xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium flex items-center gap-3">
-                        <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                        All systems verified and secure.
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
               </div>
 
               <div className="lg:col-span-8">
-                <Tabs defaultValue="history" className="w-full">
+                <Tabs defaultValue="health" className="w-full">
                   <TabsList className="bg-white/5 border border-white/10 p-1.5 rounded-[2rem] mb-12 inline-flex">
+                    <TabsTrigger value="health" className="rounded-[1.5rem] px-8 py-3.5 data-[state=active]:bg-primary data-[state=active]:text-white font-bold text-sm transition-all">
+                      <Activity className="h-4 w-4 mr-2" /> Security Health
+                    </TabsTrigger>
                     <TabsTrigger value="history" className="rounded-[1.5rem] px-8 py-3.5 data-[state=active]:bg-primary data-[state=active]:text-white font-bold text-sm transition-all">
                       <Ticket className="h-4 w-4 mr-2" /> Service History
                     </TabsTrigger>
@@ -214,6 +208,10 @@ const ClientDetail = () => {
                     </TabsTrigger>
                   </TabsList>
                   
+                  <TabsContent value="health" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <SecurityHealth clientId={client.id} />
+                  </TabsContent>
+
                   <TabsContent value="history" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="mb-10">
                       <h2 className="text-4xl font-bold tracking-tighter mb-3">Service History</h2>
