@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PlusCircle, UserPlus } from "lucide-react";
+import { Loader2, PlusCircle, UserPlus, Sparkles, Wand2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import ClientForm from "@/components/clients/ClientForm";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -50,6 +51,7 @@ interface TicketFormProps {
 
 const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClassifying, setIsClassifying] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
@@ -90,6 +92,37 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
       tags: "",
     },
   });
+
+  const handleAIClassify = async () => {
+    const description = form.getValues("description");
+    if (!description || description.length < 10) {
+      showError("Please enter a longer description first.");
+      return;
+    }
+
+    setIsClassifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('classify-ticket', {
+        body: { description }
+      });
+
+      if (error) throw error;
+
+      // Update form fields with AI suggestions
+      form.setValue("title", data.suggested_title);
+      form.setValue("category", data.suggested_category);
+      form.setValue("priority", data.suggested_priority);
+      form.setValue("tags", data.suggested_tags.join(", "));
+      form.setValue("description", data.formatted_description);
+
+      showSuccess("AI has organized your ticket details!");
+    } catch (error) {
+      console.error("AI Classification error:", error);
+      showError("Failed to classify ticket with AI.");
+    } finally {
+      setIsClassifying(false);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -176,6 +209,47 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
           )}
         />
 
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex justify-between items-end mb-2">
+                  <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Raw Description</FormLabel>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleAIClassify}
+                    disabled={isClassifying || !field.value || field.value.length < 10}
+                    className={cn(
+                      "h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
+                      field.value && field.value.length >= 10 
+                        ? "text-primary bg-primary/10 hover:bg-primary/20" 
+                        : "text-muted-foreground opacity-50"
+                    )}
+                  >
+                    {isClassifying ? (
+                      <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Analyzing...</>
+                    ) : (
+                      <><Sparkles className="h-3 w-3 mr-2" /> AI Enhance & Classify</>
+                    )}
+                  </Button>
+                </div>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Type the issue here... (e.g. 'My MacBook is running slow and I think I have a virus')" 
+                    className="bg-white/5 border-white/10 min-h-[120px] rounded-xl resize-none focus:ring-primary" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="title"
@@ -190,24 +264,6 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Describe the issue or service required in detail..." 
-                  className="bg-white/5 border-white/10 min-h-[120px] rounded-xl resize-none" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="grid grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -215,7 +271,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Priority</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
                       <SelectValue placeholder="Select priority" />
@@ -239,7 +295,7 @@ const TicketForm = ({ onTicketCreated }: TicketFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
                       <SelectValue placeholder="Select category" />
