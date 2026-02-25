@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,7 +14,10 @@ serve(async (req) => {
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
-    return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    return new Response(JSON.stringify({ error: 'No authorization header' }), { 
+      status: 401, 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    })
   }
 
   const supabase = createClient(
@@ -27,21 +30,40 @@ serve(async (req) => {
     const body = await req.json()
     console.log("[create-ticket] Creating ticket for:", body.client_display_name);
 
-    // Insert the ticket - including the new attachments field if provided
+    // Explicitly map fields to ensure we don't send extra data that might crash the insert
+    const ticketData = {
+      client_id: body.client_id,
+      client_display_name: body.client_display_name,
+      client_email: body.client_email,
+      client_phone: body.client_phone,
+      title: body.title,
+      description: body.description,
+      priority: body.priority || 'medium',
+      category: body.category || 'other',
+      estimated_hours: body.estimated_hours,
+      tags: body.tags || [],
+      attachments: body.attachments || [],
+      status: 'open',
+      updated_at: new Date().toISOString()
+    }
+
     const { data, error } = await supabase
       .from('tickets')
-      .insert([body])
+      .insert([ticketData])
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("[create-ticket] Database error:", error);
+      throw error;
+    }
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
-    console.error("[create-ticket] Error:", error);
+    console.error("[create-ticket] Function error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

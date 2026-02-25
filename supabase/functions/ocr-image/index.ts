@@ -15,7 +15,10 @@ serve(async (req) => {
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
-    return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+      status: 401, 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    })
   }
 
   try {
@@ -28,15 +31,21 @@ serve(async (req) => {
       })
     }
 
-    console.log("[ocr-image] Analyzing image for text extraction...");
-
     if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+      console.error("[ocr-image] GEMINI_API_KEY is missing from environment variables");
+      return new Response(JSON.stringify({ error: "AI service not configured. Please set GEMINI_API_KEY." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
     }
 
-    // Extract the base64 data (remove data:image/xxx;base64, prefix if present)
-    const base64Data = image_base64.split(',')[1] || image_base64;
-    const mimeType = image_base64.split(';')[0].split(':')[1] || 'image/jpeg';
+    console.log("[ocr-image] Processing image for text extraction...");
+
+    // Extract the base64 data and mime type
+    const parts = image_base64.split(',');
+    const base64Data = parts.length > 1 ? parts[1] : parts[0];
+    const mimeTypeMatch = image_base64.match(/data:([^;]+);base64/);
+    const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/jpeg';
 
     const prompt = "Extract all text from this image. If it's a screenshot of a technical issue, an error message, or a handwritten note, transcribe it exactly as it appears. Return only the transcribed text, nothing else.";
 
@@ -64,7 +73,18 @@ serve(async (req) => {
     
     if (!response.ok) {
       console.error("[ocr-image] Gemini API error:", result);
-      throw new Error("Failed to get response from Gemini");
+      return new Response(JSON.stringify({ error: "AI service error", details: result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 502,
+      })
+    }
+
+    if (!result.candidates || !result.candidates[0]?.content?.parts?.[0]?.text) {
+      console.error("[ocr-image] Unexpected Gemini response format:", result);
+      return new Response(JSON.stringify({ error: "Could not extract text from image" }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
     }
 
     const extractedText = result.candidates[0].content.parts[0].text;
@@ -74,7 +94,7 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
-    console.error("[ocr-image] Error:", error);
+    console.error("[ocr-image] Internal error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
