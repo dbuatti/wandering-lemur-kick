@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
 
@@ -26,7 +27,7 @@ serve(async (req) => {
     const body = await req.json()
     console.log("[create-ticket] Creating ticket for:", body.client_display_name);
 
-    // Insert the ticket - ticket_number will auto-increment
+    // Insert the ticket - including the new attachments field if provided
     const { data, error } = await supabase
       .from('tickets')
       .insert([body])
@@ -35,7 +36,6 @@ serve(async (req) => {
 
     if (error) throw error
 
-    // Return the created ticket with its number
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
