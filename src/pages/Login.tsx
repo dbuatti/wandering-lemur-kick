@@ -8,14 +8,23 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 
 const Login = () => {
-  const { session } = useAuth();
+  const { session, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("[Login] Session state:", { session, isLoading });
     if (session) {
       navigate('/tickets');
     }
-  }, [session, navigate]);
+  }, [session, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-white animate-pulse">Initializing...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
@@ -27,23 +36,25 @@ const Login = () => {
           <p className="text-muted-foreground">Support Portal Login</p>
         </div>
         
-        <Auth
-          supabaseClient={supabase}
-          appearance={{
-            theme: ThemeSupa,
-            variables: {
-              default: {
-                colors: {
-                  brand: 'hsl(217, 91%, 60%)',
-                  brandAccent: 'hsl(217, 91%, 50%)',
+        <div className="auth-container">
+          <Auth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: 'hsl(217, 91%, 60%)',
+                    brandAccent: 'hsl(217, 91%, 50%)',
+                  },
                 },
               },
-            },
-          }}
-          theme="dark"
-          providers={['google']}
-          redirectTo={window.location.origin + '/tickets'}
-        />
+            }}
+            theme="dark"
+            providers={[]}
+            redirectTo={window.location.origin + '/tickets'}
+          />
+        </div>
       </div>
     </div>
   );
