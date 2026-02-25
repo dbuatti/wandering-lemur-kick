@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Loader2, Users, ShieldCheck } from "lucide-react";
+import { Search, Plus, Loader2, Users, ShieldCheck, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,13 +18,15 @@ import { supabase } from "@/integrations/supabase/client";
 const ClientList = () => {
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const fetchClients = async () => {
-    setIsLoading(true);
+  const fetchClients = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    else setIsRefreshing(true);
+    
     try {
-      // Only fetch clients where is_it_client is true
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -37,6 +39,7 @@ const ClientList = () => {
       console.error("Error fetching clients:", error);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -62,22 +65,34 @@ const ClientList = () => {
           />
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="h-12 px-6 rounded-xl bg-primary text-white font-bold w-full md:w-auto">
-              <Plus className="mr-2 h-4 w-4" /> Add Client
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-bold">New Client Entry</DialogTitle>
-            </DialogHeader>
-            <ClientForm onSuccess={() => {
-              setIsDialogOpen(false);
-              fetchClients();
-            }} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-12 w-12 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+            onClick={() => fetchClients(true)}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-12 px-6 rounded-xl bg-primary text-white font-bold w-full md:w-auto shadow-lg shadow-primary/10">
+                <Plus className="mr-2 h-4 w-4" /> Add Client
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-2xl font-bold">New Client Entry</DialogTitle>
+              </DialogHeader>
+              <ClientForm onSuccess={() => {
+                setIsDialogOpen(false);
+                fetchClients();
+              }} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/5 border border-primary/10 w-fit">
@@ -88,7 +103,7 @@ const ClientList = () => {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground font-medium">Loading directory...</p>
+          <p className="text-muted-foreground font-medium animate-pulse">Loading directory...</p>
         </div>
       ) : filteredClients.length === 0 ? (
         <div className="text-center py-24 border border-dashed border-white/10 rounded-[2rem] bg-white/[0.01]">
@@ -96,7 +111,13 @@ const ClientList = () => {
             <Users className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-bold mb-2">No IT clients found</h3>
-          <p className="text-muted-foreground">Start by adding your first IT support client or company.</p>
+          <p className="text-muted-foreground mb-8">Start by adding your first IT support client or company.</p>
+          <Button 
+            onClick={() => setIsDialogOpen(true)}
+            className="rounded-full px-8 h-12 font-bold"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add First Client
+          </Button>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

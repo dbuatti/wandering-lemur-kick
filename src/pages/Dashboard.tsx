@@ -11,16 +11,18 @@ import CategoryChart from "@/components/dashboard/CategoryChart";
 import Scratchpad from "@/components/dashboard/Scratchpad";
 import CommandMenu from "@/components/CommandMenu";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Shield, ArrowRight, UserCheck, Ticket, Search, Users, Building2, User } from "lucide-react";
+import { Loader2, Shield, ArrowRight, UserCheck, Ticket, Users, Building2, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [greeting, setGreeting] = useState('');
   const [stats, setStats] = useState({
     totalClients: 0,
     activeTickets: 0,
@@ -31,6 +33,13 @@ const Dashboard = () => {
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [recentClients, setRecentClients] = useState<any[]>([]);
   const [categoryData, setCategoryData] = useState<any[]>([]);
+
+  const updateGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good Morning');
+    else if (hour < 18) setGreeting('Good Afternoon');
+    else setGreeting('Good Evening');
+  };
 
   const fetchData = async () => {
     try {
@@ -45,7 +54,6 @@ const Dashboard = () => {
 
       const totalHours = ticketsRes.data?.reduce((acc, t) => acc + (t.actual_hours || 0), 0) || 0;
 
-      // Process category data
       const categories: Record<string, number> = {};
       ticketsRes.data?.forEach(t => {
         const cat = t.category || 'other';
@@ -104,6 +112,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
+    updateGreeting();
   }, []);
 
   if (isLoading) {
@@ -111,7 +120,10 @@ const Dashboard = () => {
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground animate-pulse font-medium">Syncing your workspace...</p>
+          </div>
         </main>
         <Footer />
       </div>
@@ -124,12 +136,17 @@ const Dashboard = () => {
       <CommandMenu />
       <main className="flex-grow pt-32 pb-20">
         <div className="w-full px-6 md:px-12">
-          <div className="w-full">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full"
+          >
             <div className="mb-12">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
-                <Shield className="h-3 w-3 text-primary" />
+                <Sparkles className="h-3 w-3 text-primary" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                  Admin Control Center
+                  {greeting}, Daniele
                 </span>
               </div>
               
@@ -139,20 +156,20 @@ const Dashboard = () => {
                     Business <span className="text-primary">Overview.</span>
                   </h1>
                   <p className="text-lg text-muted-foreground font-light max-w-2xl">
-                    Welcome back, Daniele. Press <kbd className="px-2 py-1 rounded bg-white/10 text-xs font-mono">⌘K</kbd> to search anything.
+                    Everything is running smoothly. Press <kbd className="px-2 py-1 rounded bg-white/10 text-xs font-mono">⌘K</kbd> to search anything.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <Button 
                     variant="outline"
                     onClick={() => navigate('/clients')}
-                    className="rounded-full px-8 h-12 font-bold border-white/10 hover:bg-white/5"
+                    className="rounded-full px-8 h-12 font-bold border-white/10 hover:bg-white/5 transition-all"
                   >
                     Clients
                   </Button>
                   <Button 
                     onClick={() => navigate('/tickets')}
-                    className="rounded-full px-8 h-12 font-bold group shadow-lg shadow-primary/20"
+                    className="rounded-full px-8 h-12 font-bold group shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                   >
                     All Tickets <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -167,7 +184,7 @@ const Dashboard = () => {
             <div className="grid lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8 space-y-8">
                 <div className="grid md:grid-cols-2 gap-8">
-                  <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
+                  <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden hover:border-primary/20 transition-colors">
                     <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
                       <div className="flex items-center gap-3">
                         <UserCheck className="h-5 w-5 text-primary" />
@@ -179,8 +196,11 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="p-0">
                       {myTickets.length === 0 ? (
-                        <div className="p-12 text-center text-muted-foreground">
-                          No tickets currently assigned to you.
+                        <div className="p-12 text-center">
+                          <div className="h-12 w-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Ticket className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-muted-foreground text-sm">No tickets currently assigned to you.</p>
                         </div>
                       ) : (
                         <div className="divide-y divide-white/5">
@@ -192,7 +212,7 @@ const Dashboard = () => {
                             >
                               <div className="flex items-center gap-4 min-w-0">
                                 <div className={cn(
-                                  "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                                  "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110",
                                   ticket.priority === 'urgent' ? "bg-red-500/10 text-red-500" : "bg-white/5 text-muted-foreground"
                                 )}>
                                   <Ticket className="h-5 w-5" />
@@ -210,7 +230,7 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
+                  <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden hover:border-primary/20 transition-colors">
                     <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Users className="h-5 w-5 text-primary" />
@@ -222,8 +242,11 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="p-0">
                       {recentClients.length === 0 ? (
-                        <div className="p-12 text-center text-muted-foreground">
-                          No clients added yet.
+                        <div className="p-12 text-center">
+                          <div className="h-12 w-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-muted-foreground text-sm">No clients added yet.</p>
                         </div>
                       ) : (
                         <div className="divide-y divide-white/5">
@@ -234,7 +257,7 @@ const Dashboard = () => {
                               className="p-6 hover:bg-white/[0.02] transition-colors flex items-center justify-between group"
                             >
                               <div className="flex items-center gap-4 min-w-0">
-                                <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+                                <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors group-hover:scale-110">
                                   {client.is_company ? <Building2 className="h-5 w-5" /> : <User className="h-5 w-5" />}
                                 </div>
                                 <div className="min-w-0">
@@ -262,7 +285,7 @@ const Dashboard = () => {
                 <SystemHealth />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </main>
       <Footer />

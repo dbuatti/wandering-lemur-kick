@@ -17,7 +17,8 @@ import {
   Clock, 
   AlertCircle,
   TrendingUp,
-  X
+  X,
+  RefreshCw
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,6 +57,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const [filter, setFilter] = useState({
     status: initialFilter?.status || 'all',
@@ -64,7 +66,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     client_id: clientIdParam || initialFilter?.client_id || 'all',
   });
 
-  const { data: tickets = [], isLoading } = useQuery({
+  const { data: tickets = [], isLoading, refetch } = useQuery({
     queryKey: ['tickets', filter],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-tickets', {
@@ -82,6 +84,12 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     },
     staleTime: 1000 * 60,
   });
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const stats = useMemo(() => {
     return {
@@ -167,6 +175,16 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
             </div>
             
             <div className="flex items-center gap-3 w-full lg:w-auto">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              </Button>
+
               <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
                 <Button 
                   variant="ghost" 
@@ -272,8 +290,14 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
               </div>
               <h3 className="text-2xl font-bold mb-3">No tickets found</h3>
               <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                Try adjusting your search or filters to find what you're looking for.
+                Try adjusting your search or filters, or create a new ticket to get started.
               </p>
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="rounded-full px-8 h-12 font-bold"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Create First Ticket
+              </Button>
             </div>
           ) : (
             <div className={viewMode === 'grid' ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>

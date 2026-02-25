@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, User, MoreHorizontal, Hash, Trash2, CheckCircle2, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Clock, User, MoreHorizontal, Hash, Trash2, CheckCircle2, Link as LinkIcon, ExternalLink, PlayCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { showSuccess, showError } from "@/utils/toast";
@@ -110,44 +110,11 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
     }
   };
 
-  const handleAssign = async (e: React.MouseEvent, userId: string | null) => {
-    e.stopPropagation();
-    try {
-      setIsActionLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      const targetUserId = userId === 'current_user' ? user?.id : userId;
-
-      const { error } = await supabase
-        .from('tickets')
-        .update({ assigned_to: targetUserId, updated_at: new Date().toISOString() })
-        .eq('id', ticket.id);
-
-      if (error) throw error;
-
-      onAssign(ticket.id, targetUserId);
-      showSuccess(targetUserId ? "Ticket assigned successfully" : "Ticket unassigned");
-      setIsMenuOpen(false);
-    } catch (error) {
-      console.error("Error assigning ticket:", error);
-      showError("Failed to assign ticket");
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
   const copyId = (e: React.MouseEvent) => {
     e.stopPropagation();
     const id = ticket.ticket_number?.toString() || ticket.id;
     navigator.clipboard.writeText(id);
     showSuccess("Ticket ID copied");
-  };
-
-  const copyLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = `${window.location.origin}/tickets/${ticket.id}`;
-    navigator.clipboard.writeText(url);
-    showSuccess("Ticket link copied");
-    setIsMenuOpen(false);
   };
 
   const timeProgress = ticket.estimated_hours && ticket.estimated_hours > 0 
@@ -179,7 +146,19 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
             {ticket.title}
           </CardTitle>
         </div>
-        <div className="relative">
+        <div className="relative flex items-center gap-1">
+          {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full text-green-500 hover:bg-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => handleStatusChange(e, 'resolved')}
+              disabled={isActionLoading}
+              title="Quick Resolve"
+            >
+              {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -194,12 +173,6 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
           {isMenuOpen && (
             <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-card p-1 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
               <div className="py-1">
-                <button
-                  className="flex items-center w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={copyLink}
-                >
-                  <LinkIcon className="h-3 w-3 mr-2" /> Copy Link
-                </button>
                 <button
                   className="flex items-center w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
                   onClick={(e) => { e.stopPropagation(); navigate(`/tickets/${ticket.id}`); }}
@@ -220,14 +193,6 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
                   disabled={ticket.status === 'resolved' || isActionLoading}
                 >
                   Mark Resolved
-                </button>
-                <div className="border-t border-white/10 my-1"></div>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
-                  onClick={(e) => handleAssign(e, ticket.assigned_to ? null : 'current_user')}
-                  disabled={isActionLoading}
-                >
-                  {ticket.assigned_to ? 'Unassign' : 'Assign to Me'}
                 </button>
                 <div className="border-t border-white/10 my-1"></div>
                 <button
@@ -255,7 +220,7 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
           </Badge>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 flex-grow">
+        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 flex-grow font-light">
           {ticket.description}
         </p>
 
