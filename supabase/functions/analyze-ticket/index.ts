@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,10 +19,35 @@ serve(async (req) => {
     return new Response('Unauthorized', { status: 401, headers: corsHeaders })
   }
 
-  try {
-    const { title, description, comments } = await req.json()
-    console.log("[analyze-ticket] Analyzing ticket with Gemini:", title);
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') || '',
+    Deno.env.get('SUPABASE_ANON_KEY') || '',
+    { global: { headers: { Authorization: authHeader } } }
+  )
 
+  try {
+    const { ticket_id, title, description, comments, force_refresh = false } = await req.json()
+    
+    console.log("[analyze-ticket] Processing request for ticket:", ticket_id);
+
+    // 1. Check if we already have a saved analysis and we're not forcing a refresh
+    if (!force_refresh) {
+      const { data: existingAnalysis } = await supabase
+        .from('ticket_ai_analyses')
+        .select('*')
+        .eq('ticket_id', ticket_id)
+        .single();
+
+      if (existingAnalysis) {
+        console.log("[analyze-ticket] Returning existing analysis for ticket:", ticket_id);
+        return new Response(JSON.stringify(existingAnalysis), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+    }
+
+    // 2. Generate new analysis with Gemini
     if (!GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is not configured");
     }
@@ -30,7 +56,7 @@ serve(async (req) => {
     
     const prompt = `
       You are an expert IT Support Specialist and Security Auditor. 
-      Analyze the following support ticket and provide a concise summary and a suggested technical solution.
+      Analyze the following support ticket and provide a concise summary and a detailed technical solution.
       
       Ticket Title: ${title}
       Description: ${description}
@@ -41,12 +67,12 @@ serve(async (req) => {
       Return your response in JSON format with exactly these keys:
       {
         "summary": "A 1-2 sentence summary of the core problem",
-        "solution": "A step-by-step technical solution or next steps",
+        "solution": "A detailed, step-by-step technical solution formatted in Markdown. Use bolding, lists, and code blocks where appropriate for clarity.",
         "confidence": 0.95
       }
     `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,10 +96,29 @@ serve(async (req) => {
 
     const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text);
 
-    return new Response(JSON.stringify({
-      ...aiResponse,
-      timestamp: new Date().toISOString()
-    }), {
+    // 3. Persist the analysis to the database
+    const { data: savedData, error: saveError } = await supabase
+      .from('ticket_ai_analyses')
+      .upsert({
+        ticket_id,
+        summary: aiResponse.summary,
+        solution: aiResponse.solution,
+        confidence: aiResponse.confidence,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'ticket_id' })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error("[analyze-ticket] Error saving analysis:", saveError);
+      // We still return the AI response even if saving failed
+      return new Response(JSON.stringify({ ...aiResponse, timestamp: new Date().toISOString() }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    return new Response(JSON.stringify(savedData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
