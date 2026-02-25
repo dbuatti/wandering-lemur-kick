@@ -21,6 +21,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -229,6 +230,9 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
         <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-2xl font-bold">Edit Asset</DialogTitle>
+            <DialogDescription>
+              Update the details for this technical asset.
+            </DialogDescription>
           </DialogHeader>
           <ClientAssetForm 
             clientId={asset.client_id} 

@@ -6,6 +6,7 @@ import { Plus, Loader2, Shield, Search, Filter } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -87,6 +88,9 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
           <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
             <DialogHeader className="mb-6">
               <DialogTitle className="text-2xl font-bold">New Technical Asset</DialogTitle>
+              <DialogDescription>
+                Add a new device, login, or software license for this client.
+              </DialogDescription>
             </DialogHeader>
             <ClientAssetForm clientId={clientId} onSuccess={() => {
               setIsDialogOpen(false);
