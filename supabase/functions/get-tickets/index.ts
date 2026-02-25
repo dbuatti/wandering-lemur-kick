@@ -23,19 +23,21 @@ serve(async (req) => {
   )
 
   try {
-    const { status, priority, category, limit = 10, offset = 0 } = await req.json()
-    console.log("[get-tickets] Fetching tickets with filters");
+    const body = await req.json().catch(() => ({}));
+    const { status, priority, category, client_id, limit = 10, offset = 0 } = body;
+    
+    console.log("[get-tickets] Fetching tickets with filters:", { status, priority, category, client_id });
 
     let query = supabase
       .from('tickets')
       .select('*')
-      .order('ticket_number DESC', { ascending: false })
-      .order('created_at', { ascending: false })
+      .order('ticket_number', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    if (status) query = query.eq('status', status)
-    if (priority) query = query.eq('priority', priority)
-    if (category) query = query.eq('category', category)
+    if (status && status !== 'all') query = query.eq('status', status)
+    if (priority && priority !== 'all') query = query.eq('priority', priority)
+    if (category && category !== 'all') query = query.eq('category', category)
+    if (client_id && client_id !== 'all') query = query.eq('client_id', client_id)
 
     const { data, error } = await query
 
