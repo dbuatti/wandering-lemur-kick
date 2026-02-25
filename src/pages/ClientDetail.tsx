@@ -84,8 +84,8 @@ const ClientDetail = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-grow pt-32 pb-20">
-        <div className="container px-6 mx-auto">
-          <div className="max-w-7xl mx-auto">
+        <div className="w-full px-6 md:px-12">
+          <div className="w-full">
             <Button 
               variant="ghost" 
               onClick={() => navigate('/clients')}
