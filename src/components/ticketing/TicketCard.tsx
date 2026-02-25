@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, User, MoreHorizontal, Hash, Trash2, CheckCircle2 } from "lucide-react";
+import { Clock, User, MoreHorizontal, Hash, Trash2, CheckCircle2, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { showSuccess, showError } from "@/utils/toast";
@@ -142,6 +142,14 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
     showSuccess("Ticket ID copied");
   };
 
+  const copyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/tickets/${ticket.id}`;
+    navigator.clipboard.writeText(url);
+    showSuccess("Ticket link copied");
+    setIsMenuOpen(false);
+  };
+
   const timeProgress = ticket.estimated_hours && ticket.estimated_hours > 0 
     ? Math.min(((ticket.actual_hours || 0) / ticket.estimated_hours) * 100, 100) 
     : 0;
@@ -186,6 +194,19 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
           {isMenuOpen && (
             <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-card p-1 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
               <div className="py-1">
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={copyLink}
+                >
+                  <LinkIcon className="h-3 w-3 mr-2" /> Copy Link
+                </button>
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={(e) => { e.stopPropagation(); navigate(`/tickets/${ticket.id}`); }}
+                >
+                  <ExternalLink className="h-3 w-3 mr-2" /> View Details
+                </button>
+                <div className="border-t border-white/10 my-1"></div>
                 <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-white/5 rounded-lg transition-colors"
                   onClick={(e) => handleStatusChange(e, 'in_progress')}

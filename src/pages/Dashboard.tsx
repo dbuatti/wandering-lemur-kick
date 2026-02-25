@@ -11,7 +11,7 @@ import CategoryChart from "@/components/dashboard/CategoryChart";
 import Scratchpad from "@/components/dashboard/Scratchpad";
 import CommandMenu from "@/components/CommandMenu";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Shield, ArrowRight, UserCheck, Ticket, Search } from "lucide-react";
+import { Loader2, Shield, ArrowRight, UserCheck, Ticket, Search, Users, Building2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,16 +29,18 @@ const Dashboard = () => {
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [myTickets, setMyTickets] = useState<any[]>([]);
+  const [recentClients, setRecentClients] = useState<any[]>([]);
   const [categoryData, setCategoryData] = useState<any[]>([]);
 
   const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const [clientsRes, ticketsRes, resolvedRes] = await Promise.all([
+      const [clientsRes, ticketsRes, resolvedRes, recentClientsRes] = await Promise.all([
         supabase.from('clients').select('id', { count: 'exact' }),
         supabase.from('tickets').select('id, actual_hours, category', { count: 'exact' }).neq('status', 'closed'),
-        supabase.from('tickets').select('id', { count: 'exact' }).eq('status', 'resolved')
+        supabase.from('tickets').select('id', { count: 'exact' }).eq('status', 'resolved'),
+        supabase.from('clients').select('*').order('created_at', { ascending: false }).limit(3)
       ]);
 
       const totalHours = ticketsRes.data?.reduce((acc, t) => acc + (t.actual_hours || 0), 0) || 0;
@@ -56,6 +58,7 @@ const Dashboard = () => {
       }));
 
       setCategoryData(formattedCategories);
+      setRecentClients(recentClientsRes.data || []);
       setStats({
         totalClients: clientsRes.count || 0,
         activeTickets: ticketsRes.count || 0,
@@ -143,13 +146,13 @@ const Dashboard = () => {
                   <Button 
                     variant="outline"
                     onClick={() => navigate('/clients')}
-                    className="rounded-full px-8 h-12 font-bold border-white/10"
+                    className="rounded-full px-8 h-12 font-bold border-white/10 hover:bg-white/5"
                   >
                     Clients
                   </Button>
                   <Button 
                     onClick={() => navigate('/tickets')}
-                    className="rounded-full px-8 h-12 font-bold group"
+                    className="rounded-full px-8 h-12 font-bold group shadow-lg shadow-primary/20"
                   >
                     All Tickets <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -207,10 +210,51 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
                   
-                  <CategoryChart data={categoryData} />
+                  <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
+                    <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-xl font-bold">Recent Clients</CardTitle>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => navigate('/clients')} className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary">
+                        View All
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {recentClients.length === 0 ? (
+                        <div className="p-12 text-center text-muted-foreground">
+                          No clients added yet.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-white/5">
+                          {recentClients.map((client) => (
+                            <Link 
+                              key={client.id} 
+                              to={`/clients/${client.id}`}
+                              className="p-6 hover:bg-white/[0.02] transition-colors flex items-center justify-between group"
+                            >
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+                                  {client.is_company ? <Building2 className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-sm font-bold truncate group-hover:text-primary transition-colors">{client.display_name}</h4>
+                                  <p className="text-xs text-muted-foreground truncate">{client.email || 'No email'}</p>
+                                </div>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
 
-                <RecentActivity activities={activities} />
+                <div className="grid md:grid-cols-2 gap-8">
+                  <RecentActivity activities={activities} />
+                  <CategoryChart data={categoryData} />
+                </div>
               </div>
               <div className="lg:col-span-4 space-y-8">
                 <QuickActions />
