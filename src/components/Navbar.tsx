@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,12 +11,15 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import BookingDialog from "./BookingDialog";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthProvider";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,12 +29,14 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
+  const navLinks = session ? [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Tickets", href: "/tickets" },
+    { name: "Clients", href: "/clients" },
+  ] : [
     { name: "Security", href: "/#security" },
     { name: "Clean Sweep", href: "/#clean-sweep" },
     { name: "Tiers", href: "/#tiers" },
-    { name: "Clients", href: "/clients" },
-    { name: "Tickets", href: "/tickets" },
   ];
 
   return (
@@ -44,28 +49,38 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-10">
           {navLinks.map((link) => (
-            <a 
+            <Link 
               key={link.name} 
-              href={link.href} 
+              to={link.href} 
               className={`nav-link ${location.pathname === link.href ? 'text-primary' : ''}`}
             >
               {link.name}
-            </a>
+            </Link>
           ))}
-          <BookingDialog>
-            <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest">
-              Book Now
-            </Button>
-          </BookingDialog>
+          {!session ? (
+            <BookingDialog>
+              <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest">
+                Book Now
+              </Button>
+            </BookingDialog>
+          ) : (
+            <Link to="/dashboard">
+              <Button variant="outline" size="icon" className="rounded-full border-white/10">
+                <LayoutDashboard className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Trigger */}
         <div className="md:hidden flex items-center gap-4">
-          <BookingDialog>
-            <Button size="sm" className="rounded-full px-4 h-9 text-[10px] font-bold uppercase tracking-widest">
-              Book
-            </Button>
-          </BookingDialog>
+          {!session && (
+            <BookingDialog>
+              <Button size="sm" className="rounded-full px-4 h-9 text-[10px] font-bold uppercase tracking-widest">
+                Book
+              </Button>
+            </BookingDialog>
+          )}
           
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -81,22 +96,37 @@ const Navbar = () => {
               </SheetHeader>
               <div className="flex flex-col space-y-8">
                 {navLinks.map((link) => (
-                  <a 
+                  <Link 
                     key={link.name} 
-                    href={link.href} 
+                    to={link.href} 
                     className={`text-2xl font-bold hover:text-primary transition-colors ${location.pathname === link.href ? 'text-primary' : ''}`}
                     onClick={() => setIsOpen(false)}
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 ))}
                 <div className="pt-8 border-t border-white/10">
-                  <p className="text-sm text-muted-foreground mb-4">Ready to start?</p>
-                  <BookingDialog>
-                    <Button className="w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest">
-                      Book a Consultation
+                  {!session ? (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-4">Ready to start?</p>
+                      <BookingDialog>
+                        <Button className="w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest">
+                          Book a Consultation
+                        </Button>
+                      </BookingDialog>
+                    </>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest border-white/10"
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate('/dashboard');
+                      }}
+                    >
+                      Go to Dashboard
                     </Button>
-                  </BookingDialog>
+                  )}
                 </div>
               </div>
             </SheetContent>

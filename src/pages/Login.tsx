@@ -14,7 +14,7 @@ const Login = () => {
   useEffect(() => {
     console.log("[Login] Session state:", { session, isLoading });
     if (session) {
-      navigate('/tickets');
+      navigate('/dashboard');
     }
   }, [session, isLoading, navigate]);
 
@@ -56,7 +56,7 @@ const Login = () => {
               access_type: 'offline',
               prompt: 'consent',
             }}
-            redirectTo={window.location.origin + '/tickets'}
+            redirectTo={window.location.origin + '/dashboard'}
           />
         </div>
       </div>

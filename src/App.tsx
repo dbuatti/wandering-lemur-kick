@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import Clients from "./pages/Clients";
@@ -33,6 +34,14 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/tickets" 
               element={

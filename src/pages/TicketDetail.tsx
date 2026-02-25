@@ -3,6 +3,7 @@
 import Navbar from "@/components/Navbar";
 import TicketComments from "@/components/Ticketing/TicketComments";
 import TicketTimeLog from "@/components/Ticketing/TicketTimeLog";
+import TicketAIAnalysis from "@/components/Ticketing/TicketAIAnalysis";
 import Footer from "@/components/Footer";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -41,6 +42,7 @@ const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -62,9 +64,21 @@ const TicketDetail = () => {
     }
   };
 
+  const fetchComments = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-ticket-comments', {
+        body: { ticket_id: id }
+      });
+      if (!error) setComments(data.data || []);
+    } catch (e) {
+      console.error("Error fetching comments for AI context:", e);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchTicket();
+      fetchComments();
     }
   }, [id]);
 
@@ -258,6 +272,8 @@ const TicketDetail = () => {
               </div>
 
               <div className="lg:col-span-4 space-y-8">
+                <TicketAIAnalysis ticket={ticket} comments={comments} />
+
                 <TicketTimeLog 
                   ticketId={ticket.id}
                   currentActualHours={ticket.actual_hours}
