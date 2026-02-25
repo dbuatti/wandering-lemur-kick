@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, User, Mail, Phone, Calendar, Shield, CheckCircle2, XCircle, UserPlus } from "lucide-react";
+import { ArrowLeft, Clock, User, Mail, Phone, Calendar, Shield, CheckCircle2, XCircle, UserPlus, Hash } from "lucide-react";
 
 const TicketDetail = () => {
   const { id } = useParams();
@@ -155,6 +155,12 @@ const TicketDetail = () => {
             <div className="grid lg:grid-cols-12 gap-12">
               <div className="lg:col-span-8">
                 <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-xs font-bold text-primary uppercase tracking-[0.3em] flex items-center">
+                      <Hash className="h-3 w-3 mr-1" />
+                      Ticket {ticket.ticket_number || ticket.id.slice(0, 8)}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-3 mb-6">
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
                       {ticket.category}
