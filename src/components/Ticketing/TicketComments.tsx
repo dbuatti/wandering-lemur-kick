@@ -124,7 +124,10 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
           .from('ticket-attachments')
           .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Upload error details:", uploadError);
+          throw new Error(`Failed to upload ${file.name}. Make sure the 'ticket-attachments' bucket exists.`);
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('ticket-attachments')
@@ -133,9 +136,9 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
         uploadedUrls.push(publicUrl);
       }
       return uploadedUrls;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading images:", error);
-      showError("Failed to upload images");
+      showError(error.message || "Failed to upload images");
       return [];
     } finally {
       setUploadingImages(false);
@@ -143,16 +146,26 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
   };
 
   const addComment = async () => {
-    if ((!commentText.trim() && attachments.length === 0) || !user) return;
+    const trimmedContent = commentText.trim();
+    if ((!trimmedContent && attachments.length === 0) || !user) return;
 
     setIsSubmitting(true);
     try {
-      const uploadedUrls = await uploadAttachments();
+      let uploadedUrls: string[] = [];
+      
+      if (attachments.length > 0) {
+        uploadedUrls = await uploadAttachments();
+        // If we had attachments but none uploaded successfully, stop here
+        if (uploadedUrls.length === 0 && attachments.length > 0) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
       
       const { data, error } = await supabase.functions.invoke('add-ticket-comment', {
         body: {
           ticket_id: ticketId,
-          content: commentText,
+          content: trimmedContent,
           is_internal: isInternal,
           attachments: uploadedUrls
         }
@@ -162,7 +175,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
 
       const newComment = {
         id: data.comment_id,
-        content: commentText,
+        content: trimmedContent,
         user: {
           email: user.email
         },
@@ -178,7 +191,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
       showSuccess("Comment added");
     } catch (error) {
       console.error("Error adding comment:", error);
-      showError("Failed to add comment");
+      showError("Failed to add comment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -294,7 +307,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
               <Button
                 type="button"
                 onClick={addComment}
-                disabled={isSubmitting || (!commentText.trim() && attachments.length === 0)}
+                disabled={isSubmitting || uploadingImages || (!commentText.trim() && attachments.length === 0)}
                 className="h-12 px-8 rounded-xl bg-primary text-white hover:bg-primary/90 font-bold transition-all"
               >
                 {isSubmitting || uploadingImages ? (
