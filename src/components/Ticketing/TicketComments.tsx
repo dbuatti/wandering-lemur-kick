@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,8 @@ import {
   History, 
   Image as ImageIcon, 
   X,
-  Paperclip
+  Paperclip,
+  UploadCloud
 } from "lucide-react";
 import { format } from "date-fns";
 import { showSuccess, showError } from "@/utils/toast";
@@ -35,6 +36,7 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
   const [commentText, setCommentText] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchComments = async () => {
@@ -57,10 +59,48 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
     }
   };
 
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const newFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    if (newFiles.length > 0) {
+      setAttachments(prev => [...prev, ...newFiles]);
+    }
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setAttachments(prev => [...prev, ...newFiles]);
+      addFiles(e.target.files);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      addFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      addFiles(e.dataTransfer.files);
     }
   };
 
@@ -168,8 +208,23 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
       </div>
 
       {/* Comment Input */}
-      <Card className="bg-white/[0.02] border-white/10 rounded-[2rem] overflow-hidden">
-        <CardContent className="p-8">
+      <Card 
+        className={cn(
+          "bg-white/[0.02] border-white/10 rounded-[2rem] overflow-hidden transition-all duration-300",
+          isDragging && "ring-2 ring-primary ring-offset-4 ring-offset-background bg-primary/5"
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <CardContent className="p-8 relative">
+          {isDragging && (
+            <div className="absolute inset-0 z-50 bg-primary/10 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
+              <UploadCloud className="h-12 w-12 text-primary animate-bounce mb-4" />
+              <p className="text-xl font-bold text-primary">Drop images to attach</p>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -182,14 +237,16 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
                 Internal Note <ShieldAlert className="h-3 w-3" />
               </label>
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Markdown supported</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Markdown supported • Paste images directly</span>
           </div>
+          
           <div className="flex flex-col gap-4">
             <Textarea
               placeholder="Add a comment or internal note..."
               className="bg-black/20 border-white/10 rounded-2xl resize-none min-h-[120px] focus:ring-primary p-6 text-lg font-light"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
+              onPaste={handlePaste}
             />
             
             {/* Attachments Preview */}
