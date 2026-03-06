@@ -30,7 +30,8 @@ import {
   ChevronRight,
   MoreVertical,
   PlayCircle,
-  FileText
+  FileText,
+  Zap
 } from "lucide-react";
 import {
   AlertDialog,
@@ -126,6 +127,28 @@ const TicketDetail = () => {
     }
   };
 
+  const handleTierUpdate = async (newTier: string) => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase.functions.invoke('update-ticket-status', {
+        body: {
+          ticket_id: id,
+          service_tier: newTier
+        }
+      });
+
+      if (error) throw error;
+
+      showSuccess(`Service tier updated to ${newTier}`);
+      fetchTicket();
+    } catch (error) {
+      console.error("Error updating tier:", error);
+      showError("Failed to update service tier");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleGenerateInvoice = async () => {
     setIsUpdating(true);
     try {
@@ -133,7 +156,14 @@ const TicketDetail = () => {
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
       const invoiceNumber = `INV-${String((count || 0) + 1).padStart(4, '0')}`;
       
-      const rate = ticket.priority === 'urgent' ? 150 : 130;
+      // Determine rate based on service tier
+      const tierRates: Record<string, number> = {
+        maintenance: 100,
+        optimization: 130,
+        recovery: 150
+      };
+      const rate = tierRates[ticket.service_tier] || 130;
+      
       const hours = ticket.actual_hours || 1;
       const subtotal = hours * rate;
       const tax = subtotal * 0.1;
@@ -145,9 +175,9 @@ const TicketDetail = () => {
         invoice_date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: 'draft',
-        type: 'IT Support', // Using existing 'type' column instead of 'is_it_invoice'
+        type: 'IT Support',
         line_items: [{
-          description: `IT Support: ${ticket.title} (#${ticket.ticket_number})`,
+          description: `IT Support (${ticket.service_tier.charAt(0).toUpperCase() + ticket.service_tier.slice(1)}): ${ticket.title} (#${ticket.ticket_number})`,
           quantity: hours,
           unit_price: rate,
           tax_rate: 10
@@ -239,6 +269,12 @@ const TicketDetail = () => {
     urgent: "bg-red-500"
   };
 
+  const tierLabels: Record<string, string> = {
+    maintenance: "Maintenance ($100/hr)",
+    optimization: "Optimization ($130/hr)",
+    recovery: "Recovery ($150/hr)"
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -300,6 +336,28 @@ const TicketDetail = () => {
                     <FileText className="mr-2 h-4 w-4" /> View Invoice
                   </Button>
                 )}
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-11 px-6 font-bold">
+                      Tier: {ticket.service_tier ? ticket.service_tier.charAt(0).toUpperCase() + ticket.service_tier.slice(1) : 'Optimization'} <ChevronRight className="ml-2 h-4 w-4 rotate-90" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-card border-white/10 text-white w-56">
+                    <DropdownMenuLabel>Change Service Tier</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/5" />
+                    <DropdownMenuItem onClick={() => handleTierUpdate('maintenance')} className="focus:bg-primary/10">
+                      <Zap className="mr-2 h-4 w-4 text-blue-400" /> Maintenance ($100/hr)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleTierUpdate('optimization')} className="focus:bg-primary/10">
+                      <Zap className="mr-2 h-4 w-4 text-primary" /> Optimization ($130/hr)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleTierUpdate('recovery')} className="focus:bg-primary/10">
+                      <Zap className="mr-2 h-4 w-4 text-orange-400" /> Recovery ($150/hr)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-11 px-6 font-bold">
@@ -356,6 +414,9 @@ const TicketDetail = () => {
                     </Badge>
                     <Badge className={`${priorityColors[ticket.priority]} text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest`}>
                       {ticket.priority} Priority
+                    </Badge>
+                    <Badge variant="outline" className="bg-white/5 text-muted-foreground border-white/10 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                      {tierLabels[ticket.service_tier] || 'Optimization ($130/hr)'}
                     </Badge>
                   </div>
                   

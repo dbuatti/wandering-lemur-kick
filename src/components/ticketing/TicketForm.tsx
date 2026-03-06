@@ -32,7 +32,8 @@ import {
   Image as ImageIcon, 
   X, 
   UploadCloud,
-  ScanText
+  ScanText,
+  Zap
 } from "lucide-react";
 import {
   Dialog,
@@ -50,6 +51,7 @@ const formSchema = z.object({
   client_id: z.string().min(1, { message: "Please select a client." }),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   category: z.enum(['security', 'setup', 'optimization', 'recovery', 'other']).default('other'),
+  service_tier: z.enum(['maintenance', 'optimization', 'recovery']).default('optimization'),
   estimated_hours: z.number().min(0).max(100).optional(),
   tags: z.string().optional(),
 });
@@ -98,6 +100,7 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
       description: "",
       priority: "medium",
       category: "other",
+      service_tier: "optimization",
       client_id: initialClientId || "",
       tags: "",
     },
@@ -255,6 +258,7 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
           description: values.description,
           priority: values.priority,
           category: values.category,
+          service_tier: values.service_tier,
           estimated_hours: values.estimated_hours,
           tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
           attachments: uploadedUrls
@@ -509,6 +513,44 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="service_tier"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Service Tier (Hourly Rate)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
+                    <SelectValue placeholder="Select tier" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className="bg-card border-white/10">
+                  <SelectItem value="maintenance">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3 w-3 text-blue-400" />
+                      <span>Maintenance ($100/hr)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="optimization">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3 w-3 text-primary" />
+                      <span>Optimization ($130/hr)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="recovery">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3 w-3 text-orange-400" />
+                      <span>Recovery & Resilience ($150/hr)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button 
           type="submit" 

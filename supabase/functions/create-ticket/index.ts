@@ -30,7 +30,6 @@ serve(async (req) => {
     const body = await req.json()
     console.log("[create-ticket] Creating ticket for:", body.client_display_name);
 
-    // Explicitly map fields to ensure we don't send extra data that might crash the insert
     const ticketData = {
       client_id: body.client_id,
       client_display_name: body.client_display_name,
@@ -40,6 +39,7 @@ serve(async (req) => {
       description: body.description,
       priority: body.priority || 'medium',
       category: body.category || 'other',
+      service_tier: body.service_tier || 'optimization',
       estimated_hours: body.estimated_hours,
       tags: body.tags || [],
       attachments: body.attachments || [],
