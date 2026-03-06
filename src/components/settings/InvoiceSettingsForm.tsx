@@ -40,7 +40,6 @@ const formSchema = z.object({
   bank_name: z.string().optional(),
   bsb: z.string().optional(),
   account_number: z.string().optional(),
-  payment_terms: z.string().default("14 Days"),
 });
 
 const InvoiceSettingsForm = () => {
@@ -57,7 +56,6 @@ const InvoiceSettingsForm = () => {
       sender_name: "Daniele Buatti",
       invoice_prefix: "INV-",
       invoice_next_number: 1,
-      payment_terms: "14 Days",
     },
   });
 
@@ -87,7 +85,6 @@ const InvoiceSettingsForm = () => {
             bank_name: data.company_banking_details?.bank_name || "",
             bsb: data.company_banking_details?.bsb || "",
             account_number: data.company_banking_details?.account_number || "",
-            payment_terms: data.payment_terms || "14 Days",
           });
         }
       } catch (e) {
@@ -123,7 +120,7 @@ const InvoiceSettingsForm = () => {
       showSuccess("Settings updated successfully");
     } catch (error) {
       console.error(error);
-      showError("Failed to save settings");
+      showError("Failed to save settings. Please ensure the database schema is up to date.");
     } finally {
       setIsSubmitting(false);
     }
@@ -334,30 +331,6 @@ const InvoiceSettingsForm = () => {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="payment_terms"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Payment Terms</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-black/20 border-white/10 h-12 rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-card border-white/10">
-                        <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                        <SelectItem value="7 Days">7 Days</SelectItem>
-                        <SelectItem value="14 Days">14 Days</SelectItem>
-                        <SelectItem value="30 Days">30 Days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription className="text-[10px] uppercase tracking-tighter">This will appear on all new invoices.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
         </div>
