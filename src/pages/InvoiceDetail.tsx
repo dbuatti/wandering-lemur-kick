@@ -89,14 +89,34 @@ const InvoiceDetail = () => {
   const handleStatusUpdate = async (newStatus: string) => {
     setIsUpdating(true);
     try {
-      const { error } = await supabase
+      // 1. Update the invoice status
+      const { error: invoiceError } = await supabase
         .from('invoices')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', id);
-      if (error) throw error;
-      showSuccess(`Invoice marked as ${newStatus}`);
+      
+      if (invoiceError) throw invoiceError;
+      
+      // 2. If marked as paid, automatically close all associated tickets
+      if (newStatus === 'paid') {
+        const { error: ticketError } = await supabase
+          .from('tickets')
+          .update({ 
+            status: 'closed', 
+            updated_at: new Date().toISOString() 
+          })
+          .eq('related_invoice_id', id);
+          
+        if (ticketError) {
+          console.error("Error closing associated tickets:", ticketError);
+          // We don't throw here because the invoice itself was successfully updated
+        }
+      }
+
+      showSuccess(`Invoice marked as ${newStatus}${newStatus === 'paid' ? ' and associated tickets closed' : ''}`);
       fetchData();
     } catch (e) {
+      console.error(e);
       showError("Failed to update status");
     } finally {
       setIsUpdating(false);
@@ -174,7 +194,7 @@ const InvoiceDetail = () => {
                 </a>
               </Button>
               {invoice.status !== 'paid' && (
-                <Button className="rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleStatusUpdate('paid')} disabled={isUpdating}>
+                <Button className="rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold h-11 px-6" onClick={() => handleStatusUpdate('paid')} disabled={isUpdating}>
                   <CheckCircle2 className="mr-2 h-4 w-4" /> Mark Paid
                 </Button>
               )}
