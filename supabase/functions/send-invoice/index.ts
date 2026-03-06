@@ -48,7 +48,7 @@ serve(async (req) => {
 
     const publicLink = `${origin}/invoice/view/${invoice.id}?token=${invoice.public_share_token}`
     const businessName = settings?.company_name || "Daniele Buatti IT"
-    const senderEmail = settings?.company_email || "daniele.buatti@gmail.com"
+    const senderEmail = settings?.company_email || "billing@danielebuatti.com"
     const isTaxInvoice = settings?.company_tax_status === 'GST Registered'
 
     const res = await fetch('https://api.resend.com/emails', {
@@ -58,7 +58,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: `${businessName} <onboarding@resend.dev>`,
+        from: `${businessName} <billing@danielebuatti.com>`,
         to: [client_email],
         subject: `${isTaxInvoice ? 'Tax Invoice' : 'Invoice'} ${invoice.number} from ${businessName}`,
         html: `

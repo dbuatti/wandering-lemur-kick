@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
@@ -25,7 +26,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Enquiry <onboarding@resend.dev>',
+        from: 'Daniele Buatti <hello@danielebuatti.com>',
         to: ['daniele.buatti@gmail.com'],
         subject: `New Enquiry from ${name}`,
         html: `
