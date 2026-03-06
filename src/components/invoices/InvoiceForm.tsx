@@ -23,13 +23,13 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { Loader2, Plus, Trash2, Save, Calculator } from "lucide-react";
+import { Loader2, Plus, Trash2, Save } from "lucide-react";
 
 const lineItemSchema = z.object({
   description: z.string().min(1, "Description is required"),
   quantity: z.number().min(0.01, "Quantity must be > 0"),
   unit_price: z.number().min(0, "Price must be >= 0"),
-  tax_rate: z.number().default(10), // Default 10% GST
+  tax_rate: z.number().default(0),
 });
 
 const formSchema = z.object({
@@ -50,6 +50,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [taxStatus, setTaxStatus] = useState<string>("GST Registered");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,7 +63,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
       invoice_date: new Date().toISOString().split('T')[0],
       due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: "draft",
-      line_items: [{ description: "IT Support Services", quantity: 1, unit_price: 130, tax_rate: 10 }],
+      line_items: [{ description: "IT Support Services", quantity: 1, unit_price: 0, tax_rate: 10 }],
       currency: "AUD",
     },
   });
@@ -73,18 +74,30 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
   });
 
   useEffect(() => {
-    const fetchClients = async () => {
-      const { data } = await supabase
-        .from('clients')
-        .select('id, display_name')
-        .eq('is_it_client', true)
-        .order('display_name');
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       
-      setClients(data || []);
+      const [clientsRes, settingsRes] = await Promise.all([
+        supabase.from('clients').select('id, display_name').eq('is_it_client', true).order('display_name'),
+        supabase.from('settings').select('company_tax_status').eq('owner_user_id', user?.id).maybeSingle()
+      ]);
+      
+      setClients(clientsRes.data || []);
       setIsLoadingClients(false);
+
+      if (settingsRes.data) {
+        const status = settingsRes.data.company_tax_status;
+        setTaxStatus(status);
+        
+        // If not registered, update existing line items to 0% tax
+        if (status === 'Not Registered' && !initialData) {
+          const currentItems = form.getValues("line_items");
+          form.setValue("line_items", currentItems.map(item => ({ ...item, tax_rate: 0 })));
+        }
+      }
     };
-    fetchClients();
-  }, []);
+    fetchData();
+  }, [form, initialData]);
 
   const watchLineItems = form.watch("line_items");
   const totals = watchLineItems.reduce((acc, item) => {
@@ -107,8 +120,9 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
         ...values,
         client_display_name: selectedClient?.display_name,
         untaxed_amount: totals.untaxed,
+        tax_amount: totals.tax,
         total_amount: totals.total,
-        type: 'IT Support', // Using existing 'type' column
+        type: 'IT Support',
         owner_user_id: user?.id,
         updated_at: new Date().toISOString()
       };
@@ -218,7 +232,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold uppercase tracking-widest text-primary">Line Items</h3>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ description: "", quantity: 1, unit_price: 0, tax_rate: 10 })} className="rounded-lg border-white/10 h-8">
+            <Button type="button" variant="outline" size="sm" onClick={() => append({ description: "", quantity: 1, unit_price: 0, tax_rate: taxStatus === 'GST Registered' ? 10 : 0 })} className="rounded-lg border-white/10 h-8">
               <Plus className="h-3 w-3 mr-2" /> Add Item
             </Button>
           </div>
@@ -287,10 +301,12 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
               <span>Subtotal</span>
               <span>${totals.untaxed.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>GST (10%)</span>
-              <span>${totals.tax.toFixed(2)}</span>
-            </div>
+            {taxStatus === 'GST Registered' && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>GST (10%)</span>
+                <span>${totals.tax.toFixed(2)}</span>
+              </div>
+            )}
             <div className="pt-3 border-t border-white/10 flex justify-between font-bold text-lg text-white">
               <span>Total</span>
               <span>${totals.total.toFixed(2)}</span>

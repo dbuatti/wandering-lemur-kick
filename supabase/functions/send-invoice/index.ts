@@ -49,6 +49,7 @@ serve(async (req) => {
     const publicLink = `${origin}/invoice/view/${invoice.id}?token=${invoice.public_share_token}`
     const businessName = settings?.company_name || "Daniele Buatti IT"
     const senderEmail = settings?.company_email || "daniele.buatti@gmail.com"
+    const isTaxInvoice = settings?.company_tax_status === 'GST Registered'
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -59,41 +60,72 @@ serve(async (req) => {
       body: JSON.stringify({
         from: `${businessName} <onboarding@resend.dev>`,
         to: [client_email],
-        subject: `Invoice ${invoice.number} from ${businessName}`,
+        subject: `${isTaxInvoice ? 'Tax Invoice' : 'Invoice'} ${invoice.number} from ${businessName}`,
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-            <h1 style="color: #2563eb; margin-bottom: 24px;">Invoice ${invoice.number}</h1>
-            <p>Hello,</p>
-            <p>Please find your invoice from <strong>${businessName}</strong> for professional IT services.</p>
-            
-            <div style="background-color: #f8fafc; border-radius: 12px; padding: 24px; margin: 32px 0; border: 1px solid #e2e8f0;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <span style="color: #64748b;">Amount Due:</span>
-                <strong style="font-size: 20px;">$${invoice.total_amount.toFixed(2)}</strong>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background-color: #f4f7f9; }
+              .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+              .header { background-color: #00022D; padding: 48px 40px; color: #ffffff; }
+              .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; color: #3b82f6; }
+              .header p { margin: 8px 0 0; opacity: 0.7; font-size: 14px; }
+              .content { padding: 40px; }
+              .greeting { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+              .summary-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin: 32px 0; }
+              .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+              .summary-row:last-child { margin-bottom: 0; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+              .label { color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+              .value { font-weight: 700; color: #0f172a; }
+              .total-value { font-size: 24px; color: #3b82f6; }
+              .button { display: inline-block; background-color: #3b82f6; color: #ffffff !important; padding: 18px 36px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: all 0.2s; }
+              .footer { padding: 40px; border-top: 1px solid #f1f5f9; text-align: center; color: #94a3b8; font-size: 12px; }
+              .security-note { font-size: 11px; color: #cbd5e1; margin-top: 24px; font-style: italic; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${businessName}</h1>
+                <p>Professional IT Support & Security</p>
               </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="color: #64748b;">Due Date:</span>
-                <strong>${new Date(invoice.due_date).toLocaleDateString()}</strong>
+              <div class="content">
+                <div class="greeting">Hello,</div>
+                <p>Please find your ${isTaxInvoice ? 'tax invoice' : 'invoice'} for recent professional services. You can view the full breakdown and payment instructions using the secure link below.</p>
+                
+                <div class="summary-card">
+                  <div class="summary-row">
+                    <span class="label">Invoice Number</span>
+                    <span class="value">${invoice.number}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="label">Due Date</span>
+                    <span class="value">${new Date(invoice.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="label">Amount Due</span>
+                    <span class="value total-value">$${invoice.total_amount.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div style="text-align: center; margin: 40px 0;">
+                  <a href="${publicLink}" class="button">View & Pay Invoice</a>
+                </div>
+
+                <p style="font-size: 14px; color: #64748b;">If you have any questions regarding this invoice, please reply directly to this email.</p>
+              </div>
+              <div class="footer">
+                <p>&copy; ${new Date().getFullYear()} ${businessName}. All rights reserved.</p>
+                <p>${senderEmail} &bull; Melbourne, AU</p>
+                <div class="security-note">
+                  This is a secure digital invoice sent via the Daniele Buatti Support Portal.
+                </div>
               </div>
             </div>
-
-            <div style="text-align: center; margin: 40px 0;">
-              <a href="${publicLink}" style="background-color: #2563eb; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                View Invoice Online
-              </a>
-            </div>
-
-            <p style="font-size: 14px; color: #64748b; line-height: 1.6;">
-              You can view the full breakdown, download a PDF version, and find payment instructions by clicking the button above.
-            </p>
-            
-            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 40px 0;" />
-            
-            <p style="font-size: 12px; color: #94a3b8;">
-              Sent by ${businessName} Support Portal.<br />
-              ${senderEmail}
-            </p>
-          </div>
+          </body>
+          </html>
         `,
       }),
     })
@@ -102,7 +134,6 @@ serve(async (req) => {
     
     if (!res.ok) throw new Error(JSON.stringify(data))
 
-    // Update invoice status to 'sent' if it was 'draft'
     if (invoice.status === 'draft') {
       await supabase
         .from('invoices')
