@@ -13,6 +13,7 @@ import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Invoices from "./pages/Invoices";
 import InvoiceDetail from "./pages/InvoiceDetail";
+import PublicInvoice from "./pages/PublicInvoice";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 
@@ -37,6 +38,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/invoice/view/:id" element={<PublicInvoice />} />
             <Route 
               path="/dashboard" 
               element={

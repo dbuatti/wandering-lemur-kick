@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
 
@@ -23,13 +24,33 @@ serve(async (req) => {
   )
 
   try {
-    const { ticket_id, status, actual_hours, service_tier } = await req.json()
+    const body = await req.json()
+    const { 
+      ticket_id, 
+      status, 
+      actual_hours, 
+      service_tier,
+      title,
+      description,
+      priority,
+      category,
+      estimated_hours,
+      tags
+    } = body;
+
     console.log("[update-ticket-status] Updating ticket:", ticket_id);
 
     const updateData: any = { updated_at: new Date().toISOString() };
+    
     if (status) updateData.status = status;
     if (actual_hours !== undefined) updateData.actual_hours = actual_hours;
     if (service_tier) updateData.service_tier = service_tier;
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (priority) updateData.priority = priority;
+    if (category) updateData.category = category;
+    if (estimated_hours !== undefined) updateData.estimated_hours = estimated_hours;
+    if (tags) updateData.tags = tags;
 
     const { data, error } = await supabase
       .from('tickets')

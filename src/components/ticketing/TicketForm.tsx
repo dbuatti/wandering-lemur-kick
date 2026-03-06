@@ -33,7 +33,8 @@ import {
   X, 
   UploadCloud,
   ScanText,
-  Zap
+  Zap,
+  Save
 } from "lucide-react";
 import {
   Dialog,
@@ -59,9 +60,10 @@ const formSchema = z.object({
 interface TicketFormProps {
   onTicketCreated?: (ticketId: string) => void;
   initialClientId?: string;
+  initialData?: any;
 }
 
-const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
+const TicketForm = ({ onTicketCreated, initialClientId, initialData }: TicketFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
   const [ocrProcessingId, setOcrProcessingId] = useState<string | null>(null);
@@ -95,7 +97,16 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      title: initialData.title || "",
+      description: initialData.description || "",
+      priority: initialData.priority || "medium",
+      category: initialData.category || "other",
+      service_tier: initialData.service_tier || "optimization",
+      client_id: initialData.client_id || "",
+      estimated_hours: initialData.estimated_hours || 0,
+      tags: initialData.tags ? initialData.tags.join(", ") : "",
+    } : {
       title: "",
       description: "",
       priority: "medium",
@@ -107,10 +118,10 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
   });
 
   useEffect(() => {
-    if (initialClientId) {
+    if (initialClientId && !initialData) {
       form.setValue("client_id", initialClientId);
     }
-  }, [initialClientId, form]);
+  }, [initialClientId, initialData, form]);
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const newFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
@@ -245,35 +256,57 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
     setIsSubmitting(true);
     try {
       const selectedClient = clients.find(c => c.id === values.client_id);
-      const tempId = Math.random().toString(36).substring(7);
-      const uploadedUrls = await uploadAttachments(tempId);
       
-      const { data, error } = await supabase.functions.invoke('create-ticket', {
-        body: {
-          client_id: values.client_id,
-          client_display_name: selectedClient?.display_name,
-          client_email: selectedClient?.email,
-          client_phone: selectedClient?.phone,
-          title: values.title,
-          description: values.description,
-          priority: values.priority,
-          category: values.category,
-          service_tier: values.service_tier,
-          estimated_hours: values.estimated_hours,
-          tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
-          attachments: uploadedUrls
-        }
-      });
+      if (initialData) {
+        // Update existing ticket
+        const { data, error } = await supabase.functions.invoke('update-ticket-status', {
+          body: {
+            ticket_id: initialData.id,
+            title: values.title,
+            description: values.description,
+            priority: values.priority,
+            category: values.category,
+            service_tier: values.service_tier,
+            estimated_hours: values.estimated_hours,
+            tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        showSuccess("Ticket updated successfully!");
+        onTicketCreated?.(initialData.id);
+      } else {
+        // Create new ticket
+        const tempId = Math.random().toString(36).substring(7);
+        const uploadedUrls = await uploadAttachments(tempId);
+        
+        const { data, error } = await supabase.functions.invoke('create-ticket', {
+          body: {
+            client_id: values.client_id,
+            client_display_name: selectedClient?.display_name,
+            client_email: selectedClient?.email,
+            client_phone: selectedClient?.phone,
+            title: values.title,
+            description: values.description,
+            priority: values.priority,
+            category: values.category,
+            service_tier: values.service_tier,
+            estimated_hours: values.estimated_hours,
+            tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
+            attachments: uploadedUrls
+          }
+        });
 
-      showSuccess(`Ticket #${data.ticket_number || data.id.slice(0, 8)} created successfully!`);
-      form.reset();
-      setAttachments([]);
-      onTicketCreated?.(data.id);
+        if (error) throw error;
+
+        showSuccess(`Ticket #${data.ticket_number || data.id.slice(0, 8)} created successfully!`);
+        form.reset();
+        setAttachments([]);
+        onTicketCreated?.(data.id);
+      }
     } catch (error) {
-      console.error("Error creating ticket:", error);
-      showError("Failed to create ticket");
+      console.error("Error saving ticket:", error);
+      showError("Failed to save ticket");
     } finally {
       setIsSubmitting(false);
     }
@@ -289,7 +322,7 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
             <FormItem>
               <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select IT Client</FormLabel>
               <div className="flex gap-2">
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!!initialData}>
                   <FormControl>
                     <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl flex-1">
                       <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Choose a client"} />
@@ -307,22 +340,24 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
                   </SelectContent>
                 </Select>
                 
-                <Dialog open={isCreateClientOpen} onOpenChange={setIsCreateClientOpen}>
-                  <DialogTrigger asChild>
-                    <Button type="button" variant="outline" className="h-12 px-4 rounded-xl border-white/10">
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
-                    <DialogHeader className="mb-6">
-                      <DialogTitle className="text-2xl font-bold">Add New Client</DialogTitle>
-                    </DialogHeader>
-                    <ClientForm onSuccess={() => {
-                      fetchClients();
-                      setIsCreateClientOpen(false);
-                    }} />
-                  </DialogContent>
-                </Dialog>
+                {!initialData && (
+                  <Dialog open={isCreateClientOpen} onOpenChange={setIsCreateClientOpen}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline" className="h-12 px-4 rounded-xl border-white/10">
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+                      <DialogHeader className="mb-6">
+                        <DialogTitle className="text-2xl font-bold">Add New Client</DialogTitle>
+                      </DialogHeader>
+                      <ClientForm onSuccess={() => {
+                        fetchClients();
+                        setIsCreateClientOpen(false);
+                      }} />
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
               <FormMessage />
             </FormItem>
@@ -338,7 +373,7 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
                 <div className="flex justify-between items-end mb-2">
                   <div className="flex flex-col gap-1">
                     <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Raw Description</FormLabel>
-                    <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">Paste or drag images to attach</span>
+                    {!initialData && <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">Paste or drag images to attach</span>}
                   </div>
                   <Button 
                     type="button" 
@@ -428,25 +463,27 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
             </div>
           )}
 
-          <div className="flex justify-start">
-            <input 
-              type="file" 
-              multiple 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef}
-              onChange={(e) => e.target.files && addFiles(e.target.files)}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-muted-foreground hover:text-primary h-10 px-4 rounded-xl border border-white/5"
-            >
-              <ImageIcon className="h-4 w-4 mr-2" /> Attach Images
-            </Button>
-          </div>
+          {!initialData && (
+            <div className="flex justify-start">
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={(e) => e.target.files && addFiles(e.target.files)}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-muted-foreground hover:text-primary h-10 px-4 rounded-xl border border-white/5"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" /> Attach Images
+              </Button>
+            </div>
+          )}
         </div>
 
         <FormField
@@ -514,39 +551,76 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="service_tier"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Service Tier</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-card border-white/10">
+                    <SelectItem value="maintenance">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-3 w-3 text-blue-400" />
+                        <span>Maintenance ($100/hr)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="optimization">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-3 w-3 text-primary" />
+                        <span>Optimization ($130/hr)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="recovery">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-3 w-3 text-orange-400" />
+                        <span>Recovery & Resilience ($150/hr)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="estimated_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Est. Hours</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.5" 
+                    placeholder="0.0" 
+                    {...field} 
+                    onChange={e => field.onChange(parseFloat(e.target.value))} 
+                    className="bg-white/5 border-white/10 h-12 rounded-xl" 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
-          name="service_tier"
+          name="tags"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Service Tier (Hourly Rate)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
-                    <SelectValue placeholder="Select tier" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-card border-white/10">
-                  <SelectItem value="maintenance">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-3 w-3 text-blue-400" />
-                      <span>Maintenance ($100/hr)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="optimization">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-3 w-3 text-primary" />
-                      <span>Optimization ($130/hr)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="recovery">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-3 w-3 text-orange-400" />
-                      <span>Recovery & Resilience ($150/hr)</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tags (comma separated)</FormLabel>
+              <FormControl>
+                <Input placeholder="macOS, security, audit" {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -558,9 +632,12 @@ const TicketForm = ({ onTicketCreated, initialClientId }: TicketFormProps) => {
           className="w-full h-14 rounded-xl bg-primary text-white font-bold hover:scale-[1.02] transition-all"
         >
           {isSubmitting ? (
-            <>Creating... <Loader2 className="ml-2 h-4 w-4 animate-spin" /></>
+            <>Saving... <Loader2 className="ml-2 h-4 w-4 animate-spin" /></>
           ) : (
-            <>Create Ticket <PlusCircle className="ml-2 h-4 w-4" /></>
+            <>
+              {initialData ? <Save className="ml-2 h-4 w-4" /> : <PlusCircle className="ml-2 h-4 w-4" />}
+              {initialData ? "Update Ticket" : "Create Ticket"}
+            </>
           )}
         </Button>
       </form>

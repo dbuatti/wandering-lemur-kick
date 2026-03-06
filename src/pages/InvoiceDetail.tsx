@@ -20,7 +20,10 @@ import {
   Building2,
   User,
   Globe,
-  Phone
+  Phone,
+  Loader2,
+  ExternalLink,
+  Copy
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
@@ -43,8 +46,10 @@ const InvoiceDetail = () => {
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
+  const [client, setClient] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -58,6 +63,16 @@ const InvoiceDetail = () => {
       if (invoiceRes.error) throw invoiceRes.error;
       setInvoice(invoiceRes.data);
       setSettings(settingsRes.data);
+
+      // Fetch client email if not in invoice
+      if (invoiceRes.data.client_id) {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('email')
+          .eq('id', invoiceRes.data.client_id)
+          .single();
+        setClient(clientData);
+      }
     } catch (e) {
       console.error(e);
       showError("Failed to load invoice data");
@@ -87,6 +102,34 @@ const InvoiceDetail = () => {
     }
   };
 
+  const handleSendEmail = async () => {
+    const email = client?.email;
+    if (!email) {
+      showError("Client email not found. Please update client profile.");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-invoice', {
+        body: {
+          invoice_id: id,
+          client_email: email,
+          origin: window.location.origin
+        }
+      });
+
+      if (error) throw error;
+      showSuccess(`Invoice emailed to ${email}`);
+      fetchData();
+    } catch (e) {
+      console.error(e);
+      showError("Failed to send email");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleDelete = async () => {
     try {
       const { error } = await supabase.from('invoices').delete().eq('id', id);
@@ -102,6 +145,7 @@ const InvoiceDetail = () => {
   if (!invoice) return <div className="min-h-screen bg-background flex items-center justify-center text-white">Invoice not found</div>;
 
   const isTaxInvoice = settings?.company_tax_status === 'GST Registered';
+  const publicLink = `${window.location.origin}/invoice/view/${invoice.id}?token=${invoice.public_share_token}`;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -122,6 +166,11 @@ const InvoiceDetail = () => {
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" className="rounded-xl border-white/10 bg-white/5" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print
+              </Button>
+              <Button variant="outline" className="rounded-xl border-white/10 bg-white/5" asChild>
+                <a href={publicLink} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" /> Public Link
+                </a>
               </Button>
               {invoice.status !== 'paid' && (
                 <Button className="rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleStatusUpdate('paid')} disabled={isUpdating}>
@@ -252,12 +301,50 @@ const InvoiceDetail = () => {
                       <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Terms</p>
                       <p className="text-sm font-medium text-white">{settings?.payment_terms || '14 Days'}</p>
                     </div>
-                    <Button className="w-full h-12 rounded-xl bg-primary text-white font-bold">
-                      <Mail className="mr-2 h-4 w-4" /> Email to Client
-                    </Button>
+                    
+                    <div className="pt-4 border-t border-white/5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">Client Email</p>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-muted-foreground">
+                          <Mail className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold truncate">{client?.email || 'No email set'}</p>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        className="w-full h-14 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                        onClick={handleSendEmail}
+                        disabled={isSending || !client?.email}
+                      >
+                        {isSending ? (
+                          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending...</>
+                        ) : (
+                          <><Send className="mr-2 h-5 w-5" /> Email to Client</>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+              
+              <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10">
+                <h3 className="text-xl font-bold mb-6">Public Link</h3>
+                <p className="text-sm text-muted-foreground mb-6 font-light leading-relaxed">
+                  Clients can use this secure link to view their invoice online and download a PDF version without logging in.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full h-12 rounded-xl border-white/10 hover:bg-white/5"
+                  onClick={() => {
+                    navigator.clipboard.writeText(publicLink);
+                    showSuccess("Public link copied to clipboard");
+                  }}
+                >
+                  <Copy className="mr-2 h-4 w-4" /> Copy Public Link
+                </Button>
+              </div>
             </div>
           </div>
         </div>

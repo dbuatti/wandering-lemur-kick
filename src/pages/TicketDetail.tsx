@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import TicketComments from "@/components/ticketing/TicketComments";
 import TicketTimeLog from "@/components/ticketing/TicketTimeLog";
 import TicketAIAnalysis from "@/components/ticketing/TicketAIAnalysis";
+import TicketForm from "@/components/ticketing/TicketForm";
 import Footer from "@/components/Footer";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -31,7 +32,8 @@ import {
   MoreVertical,
   PlayCircle,
   FileText,
-  Zap
+  Zap,
+  Edit2
 } from "lucide-react";
 import {
   AlertDialog,
@@ -60,6 +62,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const TicketDetail = () => {
   const { id } = useParams();
@@ -68,6 +77,7 @@ const TicketDetail = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchTicket = async () => {
     try {
@@ -326,6 +336,26 @@ const TicketDetail = () => {
               </div>
 
               <div className="flex items-center gap-3">
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-11 px-6 font-bold">
+                      <Edit2 className="mr-2 h-4 w-4" /> Edit Ticket
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8 overflow-y-auto max-h-[90vh]">
+                    <DialogHeader className="mb-6">
+                      <DialogTitle className="text-2xl font-bold">Edit Ticket Details</DialogTitle>
+                    </DialogHeader>
+                    <TicketForm 
+                      initialData={ticket}
+                      onTicketCreated={() => {
+                        setIsEditDialogOpen(false);
+                        fetchTicket();
+                      }} 
+                    />
+                  </DialogContent>
+                </Dialog>
+
                 {ticket.status === 'resolved' && !ticket.related_invoice_id && (
                   <Button onClick={handleGenerateInvoice} disabled={isUpdating} className="rounded-xl bg-primary text-white font-bold h-11 px-6">
                     <FileText className="mr-2 h-4 w-4" /> Generate Invoice
