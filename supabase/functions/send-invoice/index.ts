@@ -50,6 +50,9 @@ serve(async (req) => {
     const businessName = settings?.company_name || "Daniele Buatti IT"
     const senderEmail = settings?.company_email || "billing@danielebuatti.com"
     const isTaxInvoice = settings?.company_tax_status === 'GST Registered'
+    
+    // Extract first name from display name
+    const firstName = invoice.client_display_name ? invoice.client_display_name.split(' ')[0] : 'there';
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -89,7 +92,7 @@ serve(async (req) => {
                 <p>Professional IT Support & Security</p>
               </div>
               <div class="content">
-                <div class="greeting">Hello,</div>
+                <div class="greeting">Hi ${firstName},</div>
                 <p>Please find your ${isTaxInvoice ? 'tax invoice' : 'invoice'} for recent professional services. You can view the full breakdown and payment instructions using the secure link below.</p>
                 
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; border-collapse: separate;">
