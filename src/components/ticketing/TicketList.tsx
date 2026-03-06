@@ -166,6 +166,17 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     setIsBulkInvoicing(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // Fetch settings to check tax status
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('company_tax_status')
+        .eq('owner_user_id', user?.id)
+        .maybeSingle();
+
+      const isTaxRegistered = settings?.company_tax_status === 'GST Registered';
+      const taxRate = isTaxRegistered ? 10 : 0;
+
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
       const invoiceNumber = `INV-${String((count || 0) + 1).padStart(4, '0')}`;
       
@@ -182,12 +193,12 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
           description: `IT Support (${t.service_tier}): ${t.title} (#${t.ticket_number})`,
           quantity: hours,
           unit_price: rate,
-          tax_rate: 10
+          tax_rate: taxRate
         };
       });
 
       const untaxed = lineItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
-      const tax = untaxed * 0.1;
+      const tax = untaxed * (taxRate / 100);
 
       const { data: invoice, error } = await supabase.from('invoices').insert([{
         number: invoiceNumber,
@@ -199,6 +210,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
         type: 'IT Support',
         line_items: lineItems,
         untaxed_amount: untaxed,
+        tax_amount: tax,
         total_amount: untaxed + tax,
         owner_user_id: user?.id
       }]).select().single();

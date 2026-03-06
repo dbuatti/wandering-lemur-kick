@@ -163,6 +163,17 @@ const TicketDetail = () => {
     setIsUpdating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // Fetch settings to check tax status
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('company_tax_status')
+        .eq('owner_user_id', user?.id)
+        .maybeSingle();
+
+      const isTaxRegistered = settings?.company_tax_status === 'GST Registered';
+      const taxRate = isTaxRegistered ? 10 : 0;
+
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
       const invoiceNumber = `INV-${String((count || 0) + 1).padStart(4, '0')}`;
       
@@ -176,7 +187,7 @@ const TicketDetail = () => {
       
       const hours = ticket.actual_hours || 1;
       const subtotal = hours * rate;
-      const tax = subtotal * 0.1;
+      const tax = subtotal * (taxRate / 100);
       
       const { data: invoice, error } = await supabase.from('invoices').insert([{
         number: invoiceNumber,
@@ -190,9 +201,10 @@ const TicketDetail = () => {
           description: `IT Support (${ticket.service_tier.charAt(0).toUpperCase() + ticket.service_tier.slice(1)}): ${ticket.title} (#${ticket.ticket_number})`,
           quantity: hours,
           unit_price: rate,
-          tax_rate: 10
+          tax_rate: taxRate
         }],
         untaxed_amount: subtotal,
+        tax_amount: tax,
         total_amount: subtotal + tax,
         owner_user_id: user?.id
       }]).select().single();
