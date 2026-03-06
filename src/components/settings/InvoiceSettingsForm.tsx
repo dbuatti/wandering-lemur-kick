@@ -12,7 +12,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { Loader2, Save, Building2, ShieldCheck, CreditCard } from "lucide-react";
+import { Loader2, Save, Building2, ShieldCheck, CreditCard, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formSchema = z.object({
@@ -40,6 +39,7 @@ const formSchema = z.object({
   bank_name: z.string().optional(),
   bsb: z.string().optional(),
   account_number: z.string().optional(),
+  payment_terms: z.string().default("14 days"),
 });
 
 const InvoiceSettingsForm = () => {
@@ -56,6 +56,7 @@ const InvoiceSettingsForm = () => {
       sender_name: "Daniele Buatti",
       invoice_prefix: "INV-",
       invoice_next_number: 1,
+      payment_terms: "14 days",
     },
   });
 
@@ -85,6 +86,7 @@ const InvoiceSettingsForm = () => {
             bank_name: data.company_banking_details?.bank_name || "",
             bsb: data.company_banking_details?.bsb || "",
             account_number: data.company_banking_details?.account_number || "",
+            payment_terms: data.payment_terms || "14 days",
           });
         }
       } catch (e) {
@@ -290,7 +292,7 @@ const InvoiceSettingsForm = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-4 gap-6">
                 <FormField
                   control={form.control}
                   name="bank_name"
@@ -325,6 +327,21 @@ const InvoiceSettingsForm = () => {
                       <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Account Number</FormLabel>
                       <FormControl>
                         <Input placeholder="00000000" {...field} className="bg-black/20 border-white/10 h-12 rounded-xl" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="payment_terms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-3 w-3" /> Payment Terms
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 14 days" {...field} className="bg-black/20 border-white/10 h-12 rounded-xl" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
