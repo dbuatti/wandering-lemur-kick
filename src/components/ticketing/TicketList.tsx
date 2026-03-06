@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   Plus, 
@@ -18,7 +19,10 @@ import {
   AlertCircle,
   TrendingUp,
   X,
-  RefreshCw
+  RefreshCw,
+  FileText,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,6 +43,7 @@ import TicketCard from "./TicketCard";
 import TicketForm from "./TicketForm";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { showSuccess, showError } from "@/utils/toast";
 
 interface TicketListProps {
   initialFilter?: {
@@ -51,6 +56,7 @@ interface TicketListProps {
 
 const TicketList = ({ initialFilter }: TicketListProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const clientIdParam = searchParams.get('client');
   
@@ -58,6 +64,8 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isBulkInvoicing, setIsBulkInvoicing] = useState(false);
+  const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
   
   const [filter, setFilter] = useState({
     status: initialFilter?.status || 'all',
@@ -106,6 +114,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilter(prev => ({ ...prev, [key]: value }));
+    setSelectedTicketIds(new Set()); // Clear selection on filter change
     
     if (key === 'client_id' && value === 'all') {
       const newParams = new URLSearchParams(searchParams);
@@ -124,6 +133,93 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     setFilter({ status: 'all', priority: 'all', category: 'all', client_id: 'all' });
     setSearchTerm('');
     setSearchParams({});
+    setSelectedTicketIds(new Set());
+  };
+
+  const handleSelectTicket = (id: string, selected: boolean) => {
+    const newSet = new Set(selectedTicketIds);
+    if (selected) newSet.add(id);
+    else newSet.delete(id);
+    setSelectedTicketIds(newSet);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedTicketIds.size === filteredTickets.length) {
+      setSelectedTicketIds(new Set());
+    } else {
+      setSelectedTicketIds(new Set(filteredTickets.map((t: any) => t.id)));
+    }
+  };
+
+  const handleBulkInvoice = async () => {
+    if (selectedTicketIds.size === 0) return;
+    
+    const selectedTickets = tickets.filter((t: any) => selectedTicketIds.has(t.id));
+    
+    // Verify all tickets belong to the same client
+    const clientIds = new Set(selectedTickets.map((t: any) => t.client_id));
+    if (clientIds.size > 1) {
+      showError("Bulk invoicing only works for tickets from the same client.");
+      return;
+    }
+
+    setIsBulkInvoicing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
+      const invoiceNumber = `INV-${String((count || 0) + 1).padStart(4, '0')}`;
+      
+      const tierRates: Record<string, number> = {
+        maintenance: 100,
+        optimization: 130,
+        recovery: 150
+      };
+
+      const lineItems = selectedTickets.map((t: any) => {
+        const rate = tierRates[t.service_tier] || 130;
+        const hours = t.actual_hours || 1;
+        return {
+          description: `IT Support (${t.service_tier}): ${t.title} (#${t.ticket_number})`,
+          quantity: hours,
+          unit_price: rate,
+          tax_rate: 10
+        };
+      });
+
+      const untaxed = lineItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
+      const tax = untaxed * 0.1;
+
+      const { data: invoice, error } = await supabase.from('invoices').insert([{
+        number: invoiceNumber,
+        client_id: selectedTickets[0].client_id,
+        client_display_name: selectedTickets[0].client_display_name,
+        invoice_date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'draft',
+        type: 'IT Support',
+        line_items: lineItems,
+        untaxed_amount: untaxed,
+        total_amount: untaxed + tax,
+        owner_user_id: user?.id
+      }]).select().single();
+
+      if (error) throw error;
+
+      // Link tickets to invoice
+      await Promise.all(selectedTickets.map((t: any) => 
+        supabase.from('tickets').update({ related_invoice_id: invoice.id }).eq('id', t.id)
+      ));
+
+      showSuccess(`Consolidated invoice ${invoiceNumber} created for ${selectedTicketIds.size} tickets.`);
+      setSelectedTicketIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      navigate(`/invoices/${invoice.id}`);
+    } catch (e) {
+      console.error(e);
+      showError("Failed to generate bulk invoice.");
+    } finally {
+      setIsBulkInvoicing(false);
+    }
   };
 
   const hasActiveFilters = filter.status !== 'all' || filter.priority !== 'all' || filter.category !== 'all' || filter.client_id !== 'all' || searchTerm;
@@ -169,9 +265,26 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
       <Card className="bg-card border-white/10 overflow-hidden">
         <CardHeader className="border-b border-white/5 bg-white/[0.02] px-8 py-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            <div>
-              <CardTitle className="text-2xl font-bold tracking-tight">Ticket Management</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">Track and resolve client requests with precision.</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <CardTitle className="text-2xl font-bold tracking-tight">Ticket Management</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">Track and resolve client requests with precision.</p>
+              </div>
+              {selectedTicketIds.size > 0 && (
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-4">
+                  <div className="h-8 w-px bg-white/10 mx-2" />
+                  <Badge className="bg-primary text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    {selectedTicketIds.size} Selected
+                  </Badge>
+                  <Button 
+                    onClick={handleBulkInvoice} 
+                    disabled={isBulkInvoicing}
+                    className="h-9 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-xs px-4"
+                  >
+                    {isBulkInvoicing ? <Loader2 className="h-3 w-3 animate-spin" /> : <><FileText className="mr-2 h-3 w-3" /> Bulk Invoice</>}
+                  </Button>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -247,6 +360,19 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
             </div>
             
             <div className="flex flex-wrap gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSelectAll}
+                className="h-12 px-4 rounded-xl border-white/10 bg-white/5 text-xs font-bold uppercase tracking-widest"
+              >
+                {selectedTicketIds.size === filteredTickets.length && filteredTickets.length > 0 ? (
+                  <><CheckSquare className="mr-2 h-4 w-4 text-primary" /> Deselect All</>
+                ) : (
+                  <><Square className="mr-2 h-4 w-4" /> Select All</>
+                )}
+              </Button>
+
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 h-12">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select onValueChange={(value) => handleFilterChange('status', value)} value={filter.status}>
@@ -309,6 +435,8 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
                   onStatusChange={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
                   onAssign={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
                   onDelete={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
+                  isSelected={selectedTicketIds.has(ticket.id)}
+                  onSelect={handleSelectTicket}
                 />
               ))}
             </div>

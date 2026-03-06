@@ -10,6 +10,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface TicketCardProps {
   ticket: {
@@ -28,14 +29,25 @@ interface TicketCardProps {
     estimated_hours: number | null;
     actual_hours: number | null;
     tags: string[];
+    related_invoice_id?: string;
   };
   viewMode?: 'grid' | 'list';
   onStatusChange: (ticketId: string, status: string) => void;
   onAssign: (ticketId: string, userId: string | null) => void;
   onDelete?: (ticketId: string) => void;
+  isSelected?: boolean;
+  onSelect?: (ticketId: string, selected: boolean) => void;
 }
 
-const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDelete }: TicketCardProps) => {
+const TicketCard = ({ 
+  ticket, 
+  viewMode = 'grid', 
+  onStatusChange, 
+  onAssign, 
+  onDelete,
+  isSelected,
+  onSelect
+}: TicketCardProps) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -123,28 +135,47 @@ const TicketCard = ({ ticket, viewMode = 'grid', onStatusChange, onAssign, onDel
 
   return (
     <Card 
-      className="bg-white/5 border-white/10 hover:border-primary/30 transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col"
+      className={cn(
+        "bg-white/5 border-white/10 hover:border-primary/30 transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col",
+        isSelected && "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+      )}
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
       <div className={cn("absolute top-0 left-0 w-1 h-full transition-colors", statusColors[ticket.status])} />
       
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <button 
-              onClick={copyId}
-              className="text-[10px] font-bold text-primary/60 uppercase tracking-widest flex items-center hover:text-primary transition-colors"
-            >
-              <Hash className="h-3 w-3 mr-0.5" />
-              {ticket.ticket_number || ticket.id.slice(0, 8)}
-            </button>
-            {ticket.status === 'resolved' && (
-              <CheckCircle2 className="h-3 w-3 text-green-500" />
-            )}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          {onSelect && (
+            <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+              <Checkbox 
+                checked={isSelected} 
+                onCheckedChange={(checked) => onSelect(ticket.id, !!checked)}
+                className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <button 
+                onClick={copyId}
+                className="text-[10px] font-bold text-primary/60 uppercase tracking-widest flex items-center hover:text-primary transition-colors"
+              >
+                <Hash className="h-3 w-3 mr-0.5" />
+                {ticket.ticket_number || ticket.id.slice(0, 8)}
+              </button>
+              {ticket.status === 'resolved' && (
+                <CheckCircle2 className="h-3 w-3 text-green-500" />
+              )}
+              {ticket.related_invoice_id && (
+                <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-[8px] uppercase tracking-tighter px-1 py-0">
+                  Invoiced
+                </Badge>
+              )}
+            </div>
+            <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors truncate pr-4">
+              {ticket.title}
+            </CardTitle>
           </div>
-          <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors truncate pr-4">
-            {ticket.title}
-          </CardTitle>
         </div>
         <div className="relative flex items-center gap-1">
           {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
