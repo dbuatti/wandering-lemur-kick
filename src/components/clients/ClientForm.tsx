@@ -12,14 +12,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { Loader2, UserPlus, ShieldCheck } from "lucide-react";
+import { Loader2, UserPlus, ShieldCheck, Save } from "lucide-react";
 
 const formSchema = z.object({
   display_name: z.string().min(2, "Name is required"),
@@ -32,14 +30,22 @@ const formSchema = z.object({
 
 interface ClientFormProps {
   onSuccess: () => void;
+  initialData?: any;
 }
 
-const ClientForm = ({ onSuccess }: ClientFormProps) => {
+const ClientForm = ({ onSuccess, initialData }: ClientFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      display_name: initialData.display_name || "",
+      email: initialData.email || "",
+      phone: initialData.phone || "",
+      is_company: initialData.is_company || false,
+      is_it_client: initialData.is_it_client ?? true,
+      job_title: initialData.job_title || "",
+    } : {
       display_name: "",
       email: "",
       phone: "",
@@ -53,17 +59,28 @@ const ClientForm = ({ onSuccess }: ClientFormProps) => {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from('clients')
-        .insert([{ ...values, owner_user_id: user?.id }]);
+      
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from('clients')
+          .update({ ...values, updated_at: new Date().toISOString() })
+          .eq('id', initialData.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        showSuccess("Client updated successfully");
+      } else {
+        const { error } = await supabase
+          .from('clients')
+          .insert([{ ...values, owner_user_id: user?.id }]);
 
-      showSuccess("Client added successfully");
+        if (error) throw error;
+        showSuccess("Client added successfully");
+      }
+
       onSuccess();
     } catch (error) {
       console.error(error);
-      showError("Failed to add client");
+      showError(initialData ? "Failed to update client" : "Failed to add client");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,6 +132,20 @@ const ClientForm = ({ onSuccess }: ClientFormProps) => {
           />
         </div>
 
+        <FormField
+          control={form.control}
+          name="job_title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Job Title / Role</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Director" {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -156,7 +187,14 @@ const ClientForm = ({ onSuccess }: ClientFormProps) => {
         </div>
 
         <Button type="submit" disabled={isSubmitting} className="w-full h-14 rounded-xl bg-primary text-white font-bold">
-          {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <><UserPlus className="mr-2 h-4 w-4" /> Add Client</>}
+          {isSubmitting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              {initialData ? <Save className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+              {initialData ? "Update Client" : "Add Client"}
+            </>
+          )}
         </Button>
       </form>
     </Form>

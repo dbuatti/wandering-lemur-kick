@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import TicketList from "@/components/ticketing/TicketList";
 import ClientAssetList from "@/components/clients/ClientAssetList";
 import SecurityHealth from "@/components/clients/SecurityHealth";
+import ClientForm from "@/components/clients/ClientForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +18,20 @@ import {
   Building2, 
   Mail, 
   Phone, 
-  Calendar,
-  Shield,
+  Calendar, 
   Briefcase,
   Ticket,
   Database,
-  Activity
+  Activity,
+  Edit2
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import {
@@ -40,6 +48,7 @@ const ClientDetail = () => {
   const navigate = useNavigate();
   const [client, setClient] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchClient = async () => {
     try {
@@ -100,27 +109,49 @@ const ClientDetail = () => {
           <div className="w-full">
             {/* Breadcrumbs & Header */}
             <div className="mb-12 space-y-6">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link to="/dashboard">Dashboard</Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link to="/clients">Clients</Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="text-primary font-bold">
-                      {client.display_name}
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to="/dashboard">Dashboard</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to="/clients">Clients</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage className="text-primary font-bold">
+                        {client.display_name}
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-10 px-6 font-bold">
+                      <Edit2 className="mr-2 h-4 w-4" /> Edit Profile
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+                    <DialogHeader className="mb-6">
+                      <DialogTitle className="text-2xl font-bold">Edit Client Profile</DialogTitle>
+                    </DialogHeader>
+                    <ClientForm 
+                      initialData={client}
+                      onSuccess={() => {
+                        setIsEditDialogOpen(false);
+                        fetchClient();
+                      }} 
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
 
               <div className="flex items-center gap-4">
                 <Button 
