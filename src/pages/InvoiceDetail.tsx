@@ -23,7 +23,8 @@ import {
   Phone,
   Loader2,
   ExternalLink,
-  Copy
+  Copy,
+  FlaskConical
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
@@ -102,10 +103,10 @@ const InvoiceDetail = () => {
     }
   };
 
-  const handleSendEmail = async () => {
-    const email = client?.email;
+  const handleSendEmail = async (overrideEmail?: string) => {
+    const email = overrideEmail || client?.email;
     if (!email) {
-      showError("Client email not found. Please update client profile.");
+      showError("Email address not found.");
       return;
     }
 
@@ -313,17 +314,28 @@ const InvoiceDetail = () => {
                         </div>
                       </div>
                       
-                      <Button 
-                        className="w-full h-14 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
-                        onClick={handleSendEmail}
-                        disabled={isSending || !client?.email}
-                      >
-                        {isSending ? (
-                          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending...</>
-                        ) : (
-                          <><Send className="mr-2 h-5 w-5" /> Email to Client</>
-                        )}
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button 
+                          className="flex-1 h-14 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                          onClick={() => handleSendEmail()}
+                          disabled={isSending || !client?.email}
+                        >
+                          {isSending ? (
+                            <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending...</>
+                          ) : (
+                            <><Send className="mr-2 h-5 w-5" /> Email to Client</>
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="h-14 w-14 rounded-2xl border-white/10 hover:bg-white/5 text-muted-foreground hover:text-primary transition-all"
+                          onClick={() => handleSendEmail('daniele.buatti@gmail.com')}
+                          disabled={isSending}
+                          title="Send test to yourself"
+                        >
+                          <FlaskConical className="h-5 w-5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
