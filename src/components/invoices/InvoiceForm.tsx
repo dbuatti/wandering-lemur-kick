@@ -74,7 +74,13 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
 
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase.from('clients').select('id, display_name').order('display_name');
+      // Filter by is_it_client = true to ensure only IT clients are shown
+      const { data } = await supabase
+        .from('clients')
+        .select('id, display_name')
+        .eq('is_it_client', true)
+        .order('display_name');
+      
       setClients(data || []);
       setIsLoadingClients(false);
     };
