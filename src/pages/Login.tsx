@@ -12,8 +12,8 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("[Login] Session state:", { session, isLoading });
     if (session) {
+      // React Router handles the /it prefix automatically because of the basename in App.tsx
       navigate('/dashboard');
     }
   }, [session, isLoading, navigate]);
@@ -25,6 +25,10 @@ const Login = () => {
       </div>
     );
   }
+
+  // Construct the absolute redirect URL for Supabase OAuth
+  // This ensures the user is sent back to the /it subpath after Google login
+  const redirectUrl = `${window.location.origin}/it/dashboard`;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
@@ -56,7 +60,7 @@ const Login = () => {
               access_type: 'offline',
               prompt: 'consent',
             }}
-            redirectTo={window.location.origin + '/dashboard'}
+            redirectTo={redirectUrl}
           />
         </div>
       </div>
