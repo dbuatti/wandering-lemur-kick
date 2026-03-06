@@ -118,6 +118,9 @@ const Navbar = () => {
                   <DropdownMenuItem onClick={() => navigate('/invoices')} className="rounded-xl focus:bg-primary/10 cursor-pointer">
                     <FileText className="mr-2 h-4 w-4" /> Invoices
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')} className="rounded-xl focus:bg-primary/10 cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/5" />
                   <DropdownMenuItem onClick={() => signOut()} className="rounded-xl focus:bg-red-500/10 text-red-400 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" /> Sign Out
@@ -182,6 +185,16 @@ const Navbar = () => {
                         }}
                       >
                         Go to Dashboard
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest border-white/10"
+                        onClick={() => {
+                          setIsOpen(false);
+                          navigate('/settings');
+                        }}
+                      >
+                        Settings
                       </Button>
                       <Button 
                         variant="ghost" 

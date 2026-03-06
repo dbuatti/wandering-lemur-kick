@@ -18,7 +18,9 @@ import {
   Printer,
   Mail,
   Building2,
-  User
+  User,
+  Globe,
+  Phone
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
@@ -40,28 +42,32 @@ const InvoiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const fetchInvoice = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      setInvoice(data);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const [invoiceRes, settingsRes] = await Promise.all([
+        supabase.from('invoices').select('*').eq('id', id).single(),
+        supabase.from('settings').select('*').eq('owner_user_id', user?.id).maybeSingle()
+      ]);
+
+      if (invoiceRes.error) throw invoiceRes.error;
+      setInvoice(invoiceRes.data);
+      setSettings(settingsRes.data);
     } catch (e) {
       console.error(e);
-      showError("Failed to load invoice");
+      showError("Failed to load invoice data");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (id) fetchInvoice();
+    if (id) fetchData();
   }, [id]);
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -73,7 +79,7 @@ const InvoiceDetail = () => {
         .eq('id', id);
       if (error) throw error;
       showSuccess(`Invoice marked as ${newStatus}`);
-      fetchInvoice();
+      fetchData();
     } catch (e) {
       showError("Failed to update status");
     } finally {
@@ -94,6 +100,8 @@ const InvoiceDetail = () => {
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><Clock className="animate-spin text-primary" /></div>;
   if (!invoice) return <div className="min-h-screen bg-background flex items-center justify-center text-white">Invoice not found</div>;
+
+  const isTaxInvoice = settings?.company_tax_status === 'GST Registered';
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -146,12 +154,22 @@ const InvoiceDetail = () => {
                 <CardContent className="p-0 space-y-12">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="text-2xl font-black tracking-tighter mb-2">DANIELE BUATTI</div>
-                      <div className="text-sm text-slate-500 font-medium">IT Support & Security Specialist</div>
-                      <div className="text-xs text-slate-400 mt-4">Melbourne, Australia</div>
+                      <div className="text-2xl font-black tracking-tighter mb-2 uppercase">
+                        {settings?.company_name || 'DANIELE BUATTI'}
+                      </div>
+                      <div className="text-sm text-slate-500 font-medium">
+                        {settings?.sender_name || 'IT Support & Security Specialist'}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-4 space-y-1">
+                        {settings?.company_abn && <div>ABN: {settings.company_abn}</div>}
+                        {settings?.company_email && <div>{settings.company_email}</div>}
+                        {settings?.company_phone && <div>{settings.company_phone}</div>}
+                      </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-4xl font-black text-slate-200 mb-4">INVOICE</div>
+                      <div className="text-4xl font-black text-slate-200 mb-4">
+                        {isTaxInvoice ? 'TAX INVOICE' : 'INVOICE'}
+                      </div>
                       <div className="space-y-1">
                         <div className="text-sm font-bold">{invoice.number}</div>
                         <div className="text-xs text-slate-500">Date: {format(new Date(invoice.invoice_date), 'MMM d, yyyy')}</div>
@@ -197,10 +215,12 @@ const InvoiceDetail = () => {
                         <span className="text-slate-500">Subtotal</span>
                         <span className="font-medium">${invoice.untaxed_amount?.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">GST (10%)</span>
-                        <span className="font-medium">${invoice.tax_amount?.toFixed(2)}</span>
-                      </div>
+                      {isTaxInvoice && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500">GST (10%)</span>
+                          <span className="font-medium">${invoice.tax_amount?.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="pt-4 border-t-2 border-slate-900 flex justify-between text-xl font-black">
                         <span>Total</span>
                         <span>${invoice.total_amount?.toFixed(2)}</span>
@@ -222,8 +242,15 @@ const InvoiceDetail = () => {
                   <div className="space-y-6">
                     <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Bank Transfer</p>
-                      <p className="text-sm font-medium text-white">BSB: 000-000</p>
-                      <p className="text-sm font-medium text-white">Account: 00000000</p>
+                      {settings?.company_banking_details?.bank_name && (
+                        <p className="text-sm font-medium text-white mb-1">{settings.company_banking_details.bank_name}</p>
+                      )}
+                      <p className="text-sm font-medium text-white">BSB: {settings?.company_banking_details?.bsb || '000-000'}</p>
+                      <p className="text-sm font-medium text-white">Account: {settings?.company_banking_details?.account_number || '00000000'}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Terms</p>
+                      <p className="text-sm font-medium text-white">{settings?.payment_terms || '14 Days'}</p>
                     </div>
                     <Button className="w-full h-12 rounded-xl bg-primary text-white font-bold">
                       <Mail className="mr-2 h-4 w-4" /> Email to Client
