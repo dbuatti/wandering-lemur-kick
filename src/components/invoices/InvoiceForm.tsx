@@ -105,6 +105,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
         tax_amount: totals.tax,
         total_amount: totals.total,
         owner_user_id: user?.id,
+        is_it_invoice: true, // Mark as IT invoice
         updated_at: new Date().toISOString()
       };
 

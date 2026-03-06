@@ -154,7 +154,8 @@ const TicketDetail = () => {
         untaxed_amount: subtotal,
         tax_amount: tax,
         total_amount: subtotal + tax,
-        owner_user_id: user?.id
+        owner_user_id: user?.id,
+        is_it_invoice: true // Mark as IT invoice
       }]).select().single();
 
       if (error) throw error;
