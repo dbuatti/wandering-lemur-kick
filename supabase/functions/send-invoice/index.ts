@@ -74,12 +74,9 @@ serve(async (req) => {
               .header p { margin: 8px 0 0; opacity: 0.7; font-size: 14px; }
               .content { padding: 40px; }
               .greeting { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-              .summary-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin: 32px 0; }
-              .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
-              .summary-row:last-child { margin-bottom: 0; padding-top: 12px; border-top: 1px solid #e2e8f0; }
-              .label { color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-              .value { font-weight: 700; color: #0f172a; }
-              .total-value { font-size: 24px; color: #3b82f6; }
+              .label { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+              .value { font-weight: 700; color: #0f172a; font-size: 16px; }
+              .total-value { font-size: 28px; color: #3b82f6; }
               .button { display: inline-block; background-color: #3b82f6; color: #ffffff !important; padding: 18px 36px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: all 0.2s; }
               .footer { padding: 40px; border-top: 1px solid #f1f5f9; text-align: center; color: #94a3b8; font-size: 12px; }
               .security-note { font-size: 11px; color: #cbd5e1; margin-top: 24px; font-style: italic; }
@@ -95,20 +92,26 @@ serve(async (req) => {
                 <div class="greeting">Hello,</div>
                 <p>Please find your ${isTaxInvoice ? 'tax invoice' : 'invoice'} for recent professional services. You can view the full breakdown and payment instructions using the secure link below.</p>
                 
-                <div class="summary-card">
-                  <div class="summary-row">
-                    <span class="label">Invoice Number</span>
-                    <span class="value">${invoice.number}</span>
-                  </div>
-                  <div class="summary-row">
-                    <span class="label">Due Date</span>
-                    <span class="value">${new Date(invoice.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                  </div>
-                  <div class="summary-row">
-                    <span class="label">Amount Due</span>
-                    <span class="value total-value">$${invoice.total_amount.toFixed(2)}</span>
-                  </div>
-                </div>
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; border-collapse: separate;">
+                  <tr>
+                    <td style="padding: 32px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td class="label" style="padding-bottom: 16px;">Invoice Number</td>
+                          <td class="value" style="padding-bottom: 16px; text-align: right;">${invoice.number}</td>
+                        </tr>
+                        <tr>
+                          <td class="label" style="padding-bottom: 16px;">Due Date</td>
+                          <td class="value" style="padding-bottom: 16px; text-align: right;">${new Date(invoice.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                        </tr>
+                        <tr>
+                          <td class="label" style="padding-top: 16px; border-top: 1px solid #e2e8f0;">Amount Due</td>
+                          <td class="value total-value" style="padding-top: 16px; text-align: right; border-top: 1px solid #e2e8f0;">$${invoice.total_amount.toFixed(2)}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
 
                 <div style="text-align: center; margin: 40px 0;">
                   <a href="${publicLink}" class="button">View & Pay Invoice</a>
