@@ -74,7 +74,6 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
 
   useEffect(() => {
     const fetchClients = async () => {
-      // Filter by is_it_client = true to ensure only IT clients are shown
       const { data } = await supabase
         .from('clients')
         .select('id, display_name')
@@ -108,10 +107,9 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
         ...values,
         client_display_name: selectedClient?.display_name,
         untaxed_amount: totals.untaxed,
-        tax_amount: totals.tax,
         total_amount: totals.total,
+        type: 'IT Support', // Using existing 'type' column
         owner_user_id: user?.id,
-        is_it_invoice: true, // Mark as IT invoice
         updated_at: new Date().toISOString()
       };
 
@@ -119,7 +117,6 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
       if (initialData?.id) {
         result = await supabase.from('invoices').update(payload).eq('id', initialData.id).select().single();
       } else {
-        // Generate a simple invoice number
         const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
         const invoiceNumber = `INV-${String((count || 0) + 1).padStart(4, '0')}`;
         result = await supabase.from('invoices').insert([{ ...payload, number: invoiceNumber }]).select().single();

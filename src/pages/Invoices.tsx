@@ -44,7 +44,7 @@ const Invoices = () => {
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
-        .eq('is_it_invoice', true) // Only show IT invoices
+        .eq('type', 'IT Support') // Filtering by existing 'type' column
         .order('created_at', { ascending: false });
       if (error) throw error;
       setInvoices(data || []);

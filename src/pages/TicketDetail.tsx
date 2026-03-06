@@ -145,6 +145,7 @@ const TicketDetail = () => {
         invoice_date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: 'draft',
+        type: 'IT Support', // Using existing 'type' column instead of 'is_it_invoice'
         line_items: [{
           description: `IT Support: ${ticket.title} (#${ticket.ticket_number})`,
           quantity: hours,
@@ -152,10 +153,8 @@ const TicketDetail = () => {
           tax_rate: 10
         }],
         untaxed_amount: subtotal,
-        tax_amount: tax,
         total_amount: subtotal + tax,
-        owner_user_id: user?.id,
-        is_it_invoice: true // Mark as IT invoice
+        owner_user_id: user?.id
       }]).select().single();
 
       if (error) throw error;
