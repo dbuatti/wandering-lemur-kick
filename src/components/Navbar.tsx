@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard, Search, User, LogOut, Settings, Ticket, Users } from "lucide-react";
+import { Menu, X, LayoutDashboard, Search, User, LogOut, Settings, Ticket, Users, FileText } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +41,7 @@ const Navbar = () => {
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
     { name: "Tickets", href: "/tickets", icon: <Ticket className="h-4 w-4" /> },
     { name: "Clients", href: "/clients", icon: <Users className="h-4 w-4" /> },
+    { name: "Invoices", href: "/invoices", icon: <FileText className="h-4 w-4" /> },
   ] : [
     { name: "Security", href: "/#security" },
     { name: "Clean Sweep", href: "/#clean-sweep" },
@@ -113,6 +114,9 @@ const Navbar = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/tickets')} className="rounded-xl focus:bg-primary/10 cursor-pointer">
                     <Ticket className="mr-2 h-4 w-4" /> My Tickets
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/invoices')} className="rounded-xl focus:bg-primary/10 cursor-pointer">
+                    <FileText className="mr-2 h-4 w-4" /> Invoices
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/5" />
                   <DropdownMenuItem onClick={() => signOut()} className="rounded-xl focus:bg-red-500/10 text-red-400 cursor-pointer">

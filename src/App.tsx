@@ -11,6 +11,8 @@ import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
+import Invoices from "./pages/Invoices";
+import InvoiceDetail from "./pages/InvoiceDetail";
 import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
@@ -71,6 +73,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ClientDetail />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices" 
+              element={
+                <ProtectedRoute>
+                  <Invoices />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices/:id" 
+              element={
+                <ProtectedRoute>
+                  <InvoiceDetail />
                 </ProtectedRoute>
               } 
             />

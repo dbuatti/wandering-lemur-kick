@@ -29,7 +29,8 @@ import {
   Copy,
   ChevronRight,
   MoreVertical,
-  PlayCircle
+  PlayCircle,
+  FileText
 } from "lucide-react";
 import {
   AlertDialog,
@@ -125,6 +126,51 @@ const TicketDetail = () => {
     }
   };
 
+  const handleGenerateInvoice = async () => {
+    setIsUpdating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
+      const invoiceNumber = `INV-${String((count || 0) + 1).padStart(4, '0')}`;
+      
+      const rate = ticket.priority === 'urgent' ? 150 : 130;
+      const hours = ticket.actual_hours || 1;
+      const subtotal = hours * rate;
+      const tax = subtotal * 0.1;
+      
+      const { data: invoice, error } = await supabase.from('invoices').insert([{
+        number: invoiceNumber,
+        client_id: ticket.client_id,
+        client_display_name: ticket.client_display_name,
+        invoice_date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'draft',
+        line_items: [{
+          description: `IT Support: ${ticket.title} (#${ticket.ticket_number})`,
+          quantity: hours,
+          unit_price: rate,
+          tax_rate: 10
+        }],
+        untaxed_amount: subtotal,
+        tax_amount: tax,
+        total_amount: subtotal + tax,
+        owner_user_id: user?.id
+      }]).select().single();
+
+      if (error) throw error;
+
+      await supabase.from('tickets').update({ related_invoice_id: invoice.id }).eq('id', id);
+      
+      showSuccess("Invoice generated successfully");
+      navigate(`/invoices/${invoice.id}`);
+    } catch (e) {
+      console.error(e);
+      showError("Failed to generate invoice");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDeleteTicket = async () => {
     setIsUpdating(true);
     try {
@@ -139,29 +185,6 @@ const TicketDetail = () => {
     } catch (error) {
       console.error("Error deleting ticket:", error);
       showError("Failed to delete ticket");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleAssignToMe = async () => {
-    setIsUpdating(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase
-        .from('tickets')
-        .update({ assigned_to: user.id, updated_at: new Date().toISOString() })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      showSuccess("Ticket assigned to you");
-      fetchTicket();
-    } catch (error) {
-      console.error("Error assigning ticket:", error);
-      showError("Failed to assign ticket");
     } finally {
       setIsUpdating(false);
     }
@@ -216,14 +239,6 @@ const TicketDetail = () => {
     urgent: "bg-red-500"
   };
 
-  const statusColors = {
-    open: "bg-blue-500",
-    in_progress: "bg-purple-500",
-    pending: "bg-slate-500",
-    resolved: "bg-green-500",
-    closed: "bg-slate-700"
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -275,6 +290,16 @@ const TicketDetail = () => {
               </div>
 
               <div className="flex items-center gap-3">
+                {ticket.status === 'resolved' && !ticket.related_invoice_id && (
+                  <Button onClick={handleGenerateInvoice} disabled={isUpdating} className="rounded-xl bg-primary text-white font-bold h-11 px-6">
+                    <FileText className="mr-2 h-4 w-4" /> Generate Invoice
+                  </Button>
+                )}
+                {ticket.related_invoice_id && (
+                  <Button variant="outline" onClick={() => navigate(`/invoices/${ticket.related_invoice_id}`)} className="rounded-xl border-primary/30 text-primary h-11 px-6">
+                    <FileText className="mr-2 h-4 w-4" /> View Invoice
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-11 px-6 font-bold">
@@ -422,7 +447,7 @@ const TicketDetail = () => {
                     )}
                     {!ticket.assigned_to && (
                       <Button 
-                        onClick={handleAssignToMe}
+                        onClick={() => {}}
                         disabled={isUpdating}
                         variant="secondary"
                         className="w-full h-14 rounded-2xl font-bold"
