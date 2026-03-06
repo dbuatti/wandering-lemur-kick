@@ -329,7 +329,7 @@ const InvoiceDetail = () => {
                         <Button
                           variant="outline"
                           className="h-14 w-14 rounded-2xl border-white/10 hover:bg-white/5 text-muted-foreground hover:text-primary transition-all"
-                          onClick={() => handleSendEmail('daniele.buatti@gmail.com')}
+                          onClick={() => handleSendEmail('info@danielebuatti.com')}
                           disabled={isSending}
                           title="Send test to yourself"
                         >
