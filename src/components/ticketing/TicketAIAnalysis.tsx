@@ -30,18 +30,20 @@ const TicketAIAnalysis = ({ ticket, comments }: TicketAIAnalysisProps) => {
 
   const fetchSavedAnalysis = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('ticket_ai_analyses')
         .select('*')
         .eq('ticket_id', ticket.id)
-        .single();
+        .maybeSingle(); // Using maybeSingle to avoid 406 error when no record exists
+
+      if (error) throw error;
 
       if (data) {
         setAnalysis(data);
         setHasSavedAnalysis(true);
       }
     } catch (error) {
-      // Silent fail if no analysis exists
+      console.error("Error fetching saved analysis:", error);
     }
   };
 
