@@ -5,28 +5,33 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.97.0'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders, status: 200 })
   }
-
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) {
-    return new Response('Unauthorized', { status: 401, headers: corsHeaders })
-  }
-
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') || '',
-    Deno.env.get('SUPABASE_ANON_KEY') || '',
-    { global: { headers: { Authorization: authHeader } } }
-  )
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      })
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_ANON_KEY') || '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
     const { ticket_id, content, is_internal, attachments } = await req.json()
 
-    console.log("[add-ticket-comment] Adding comment to ticket:", { ticket_id, is_internal, has_attachments: !!attachments?.length });
+    console.log("[add-ticket-comment] Adding comment to ticket:", { ticket_id, is_internal });
 
     if (!ticket_id || (!content && (!attachments || attachments.length === 0))) {
       return new Response(JSON.stringify({ error: 'Ticket ID and content or attachments are required' }), {
@@ -35,7 +40,6 @@ serve(async (req) => {
       })
     }
 
-    // Insert directly into the table
     const { data, error } = await supabase
       .from('ticket_comments')
       .insert([{
