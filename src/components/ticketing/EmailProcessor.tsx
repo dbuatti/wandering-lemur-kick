@@ -17,7 +17,9 @@ import {
   X,
   BrainCircuit,
   ShieldCheck,
-  PlusCircle
+  PlusCircle,
+  Check,
+  ChevronRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
@@ -32,7 +34,8 @@ interface EmailProcessorProps {
 const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
   const [emailText, setEmailText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
+  const [applyingIds, setApplyingIds] = useState<Set<number>>(new Set());
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
   const [analysis, setAnalysis] = useState<any>(null);
 
   const handleAnalyze = async () => {
@@ -49,7 +52,7 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
 
       if (error) throw error;
       setAnalysis(data);
-      showSuccess("AI analysis complete.");
+      showSuccess(`AI identified ${data.suggestions?.length || 0} potential actions.`);
     } catch (error) {
       console.error(error);
       showError("Failed to analyze email chain.");
@@ -58,29 +61,38 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
     }
   };
 
-  const handleApply = async () => {
-    if (!analysis) return;
-    setIsApplying(true);
+  const handleApplySuggestion = async (suggestion: any, index: number) => {
+    setApplyingIds(prev => new Set(prev).add(index));
 
     try {
-      if (analysis.action === 'update' && analysis.ticket_id) {
-        // Add comment to existing ticket
-        const { error } = await supabase.functions.invoke('add-ticket-comment', {
-          body: {
-            ticket_id: analysis.ticket_id,
-            content: analysis.suggested_update.content,
-            is_internal: analysis.suggested_update.is_internal
-          }
-        });
+      if (suggestion.action === 'update' || suggestion.action === 'status_change') {
+        // 1. Add comment if content exists
+        if (suggestion.content) {
+          await supabase.functions.invoke('add-ticket-comment', {
+            body: {
+              ticket_id: suggestion.ticket_id,
+              content: suggestion.content,
+              is_internal: false
+            }
+          });
+        }
 
-        if (error) throw error;
-        showSuccess("Ticket updated with new information.");
-      } else if (analysis.action === 'create') {
-        // Create new ticket
+        // 2. Update status if requested
+        if (suggestion.new_status) {
+          await supabase.functions.invoke('update-ticket-status', {
+            body: {
+              ticket_id: suggestion.ticket_id,
+              status: suggestion.new_status
+            }
+          });
+        }
+        
+        showSuccess(`Ticket #${suggestion.ticket_number || 'updated'} processed.`);
+      } else if (suggestion.action === 'create') {
         const { data, error } = await supabase.functions.invoke('create-ticket', {
           body: {
-            ...analysis.suggested_ticket,
-            client_display_name: analysis.suggested_ticket.client_name
+            ...suggestion.suggested_ticket,
+            client_display_name: suggestion.suggested_ticket.client_name
           }
         });
 
@@ -88,14 +100,20 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
         showSuccess(`New ticket #${data.ticket_number || data.id.slice(0, 8)} created.`);
       }
 
-      onComplete();
+      setCompletedIds(prev => new Set(prev).add(index));
     } catch (error) {
       console.error(error);
-      showError("Failed to apply AI suggestions.");
+      showError("Failed to apply suggestion.");
     } finally {
-      setIsApplying(false);
+      setApplyingIds(prev => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
     }
   };
+
+  const allDone = analysis?.suggestions?.length > 0 && completedIds.size === analysis.suggestions.length;
 
   return (
     <div className="space-y-6">
@@ -111,7 +129,7 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
             <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3">
               <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Paste a full email chain below. The AI will check for existing tickets and suggest the best course of action.
+                Paste a full email chain below. The AI will identify multiple updates, status changes, and new requests across all your active tickets.
               </p>
             </div>
 
@@ -149,91 +167,109 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
-                  analysis.action === 'update' ? "bg-purple-500" : "bg-blue-500"
-                )}>
-                  AI Recommendation: {analysis.action === 'update' ? 'Update Ticket' : 'New Ticket'}
+                <Badge className="bg-primary text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                  {analysis.suggestions?.length || 0} Actions Identified
                 </Badge>
-                <Badge variant="outline" className="bg-white/5 border-white/10 text-[10px] py-1">
-                  {Math.round(analysis.confidence * 100)}% Confidence
-                </Badge>
+                {allDone && (
+                  <Badge className="bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    All Applied
+                  </Badge>
+                )}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setAnalysis(null)} className="h-8 text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={() => { setAnalysis(null); setCompletedIds(new Set()); }} className="h-8 text-muted-foreground">
                 <X className="h-4 w-4 mr-2" /> Start Over
               </Button>
             </div>
 
-            <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden">
-              <CardContent className="p-8 space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold mb-1">AI Reasoning</h4>
-                    <p className="text-sm text-muted-foreground font-light leading-relaxed">{analysis.reasoning}</p>
-                  </div>
+            <div className="p-6 rounded-[2rem] bg-white/5 border border-white/10">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                  <Sparkles className="h-5 w-5" />
                 </div>
+                <div>
+                  <h4 className="text-sm font-bold mb-1">AI Reasoning</h4>
+                  <p className="text-sm text-muted-foreground font-light leading-relaxed">{analysis.reasoning}</p>
+                </div>
+              </div>
 
-                <div className="pt-6 border-t border-white/5">
-                  {analysis.action === 'update' ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-purple-400">
-                        <MessageSquare className="h-3 w-3" /> Suggested Update
+              <div className="space-y-4">
+                {analysis.suggestions?.map((suggestion: any, index: number) => {
+                  const isApplying = applyingIds.has(index);
+                  const isDone = completedIds.has(index);
+
+                  return (
+                    <div 
+                      key={index} 
+                      className={cn(
+                        "p-6 rounded-2xl border transition-all duration-300",
+                        isDone ? "bg-green-500/5 border-green-500/20 opacity-60" : 
+                        suggestion.action === 'create' ? "bg-blue-500/5 border-blue-500/10" : "bg-purple-500/5 border-purple-500/10"
+                      )}
+                    >
+                      <div className="flex justify-between items-start gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          {suggestion.action === 'create' ? (
+                            <Badge className="bg-blue-500 text-white text-[9px] uppercase tracking-widest">New Ticket</Badge>
+                          ) : suggestion.new_status ? (
+                            <Badge className="bg-orange-500 text-white text-[9px] uppercase tracking-widest">Status: {suggestion.new_status}</Badge>
+                          ) : (
+                            <Badge className="bg-purple-500 text-white text-[9px] uppercase tracking-widest">Update</Badge>
+                          )}
+                          
+                          {suggestion.ticket_number && (
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                              #{suggestion.ticket_number}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <Button
+                          size="sm"
+                          variant={isDone ? "ghost" : "outline"}
+                          className={cn(
+                            "h-8 rounded-lg text-[10px] font-bold uppercase tracking-widest",
+                            isDone ? "text-green-400" : "border-white/10 hover:bg-white/5"
+                          )}
+                          onClick={() => handleApplySuggestion(suggestion, index)}
+                          disabled={isApplying || isDone}
+                        >
+                          {isApplying ? <Loader2 className="h-3 w-3 animate-spin" /> : 
+                           isDone ? <><Check className="h-3 w-3 mr-1" /> Applied</> : 
+                           "Apply Action"}
+                        </Button>
                       </div>
-                      <div className="p-6 rounded-2xl bg-purple-500/5 border border-purple-500/10">
-                        <p className="text-sm text-white/80 leading-relaxed italic">"{analysis.suggested_update.content}"</p>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Ticket className="h-3 w-3" /> Target Ticket ID: <span className="font-mono text-primary">{analysis.ticket_id.slice(0, 8)}...</span>
+
+                      <div className="space-y-2">
+                        {suggestion.action === 'create' ? (
+                          <>
+                            <h5 className="font-bold text-white text-sm">{suggestion.suggested_ticket.title}</h5>
+                            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{suggestion.suggested_ticket.description}</p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline" className="bg-white/5 text-[8px] py-0">Client: {suggestion.suggested_ticket.client_name}</Badge>
+                              <Badge variant="outline" className="bg-white/5 text-[8px] py-0">Priority: {suggestion.suggested_ticket.priority}</Badge>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {suggestion.ticket_title && <h5 className="font-bold text-white/70 text-xs mb-1">{suggestion.ticket_title}</h5>}
+                            <p className="text-xs text-white/80 leading-relaxed italic">"{suggestion.content}"</p>
+                          </>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-blue-400">
-                        <PlusCircle className="h-3 w-3" /> Suggested Ticket
-                      </div>
-                      <div className="grid gap-4">
-                        <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10">
-                          <h5 className="font-bold text-white mb-2">{analysis.suggested_ticket.title}</h5>
-                          <p className="text-sm text-muted-foreground font-light leading-relaxed">{analysis.suggested_ticket.description}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                          <Badge variant="outline" className="bg-white/5 border-white/10 text-[10px] py-1">
-                            Priority: {analysis.suggested_ticket.priority}
-                          </Badge>
-                          <Badge variant="outline" className="bg-white/5 border-white/10 text-[10px] py-1">
-                            Category: {analysis.suggested_ticket.category}
-                          </Badge>
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] py-1">
-                            Client: {analysis.suggested_ticket.client_name}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  );
+                })}
+              </div>
+            </div>
 
-            <Button 
-              className={cn(
-                "w-full h-14 rounded-2xl font-bold shadow-lg transition-all hover:scale-[1.02]",
-                analysis.action === 'update' ? "bg-purple-600 shadow-purple-600/20" : "bg-blue-600 shadow-blue-600/20"
-              )}
-              onClick={handleApply}
-              disabled={isApplying}
-            >
-              {isApplying ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Applying Changes...</>
-              ) : (
-                <>
-                  {analysis.action === 'update' ? <MessageSquare className="mr-2 h-5 w-5" /> : <Ticket className="mr-2 h-5 w-5" />}
-                  {analysis.action === 'update' ? 'Update Existing Ticket' : 'Create New Ticket'}
-                </>
-              )}
-            </Button>
+            {allDone && (
+              <Button 
+                className="w-full h-14 rounded-2xl bg-green-600 text-white font-bold shadow-lg shadow-green-600/20 hover:scale-[1.02] transition-all"
+                onClick={onComplete}
+              >
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Finish & Close
+              </Button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -38,11 +38,10 @@ serve(async (req) => {
       })
     }
 
-    console.log("[process-email-chain] Fetching context for AI analysis...");
+    console.log("[process-email-chain] Fetching context for multi-action AI analysis...");
 
-    // Fetch active tickets and clients for context
     const [ticketsRes, clientsRes] = await Promise.all([
-      supabase.from('tickets').select('id, ticket_number, title, status, client_display_name').neq('status', 'closed').order('updated_at', { ascending: false }).limit(30),
+      supabase.from('tickets').select('id, ticket_number, title, status, client_display_name').neq('status', 'closed').order('updated_at', { ascending: false }).limit(50),
       supabase.from('clients').select('id, display_name, email').order('display_name', { ascending: true })
     ]);
 
@@ -54,7 +53,7 @@ serve(async (req) => {
     }
 
     const prompt = `
-      You are an expert IT Support Dispatcher. Analyze the following email chain and compare it against the list of existing active tickets.
+      You are an expert IT Support Dispatcher. Analyze the following email chain and identify ALL relevant updates, status changes, or new requests.
       
       Email Chain:
       """
@@ -62,34 +61,38 @@ serve(async (req) => {
       """
       
       Existing Active Tickets:
-      ${JSON.stringify(existingTickets.map(t => ({ id: t.id, number: t.ticket_number, title: t.title, client: t.client_display_name })))}
+      ${JSON.stringify(existingTickets.map(t => ({ id: t.id, number: t.ticket_number, title: t.title, client: t.client_display_name, status: t.status })))}
       
       Existing Clients:
       ${JSON.stringify(existingClients.map(c => ({ id: c.id, name: c.display_name, email: c.email })))}
       
       Your task:
-      1. Determine if this email is an update to an EXISTING ticket or a NEW request.
-      2. If it's an update, identify the ticket ID.
-      3. If it's a new request, suggest ticket details and try to match it to an existing client by name or email found in the chain.
+      1. Break down the email into distinct "suggestions".
+      2. For each suggestion, determine if it's an update to an EXISTING ticket, a request to CLOSE/RESOLVE a ticket, or a NEW request.
+      3. If it's an update or closure, identify the correct ticket ID from the list.
+      4. If it's a new request, suggest ticket details and match to a client.
       
       Return your response in JSON format with exactly these keys:
       {
-        "action": "create" | "update" | "none",
-        "confidence": 0.0 to 1.0,
-        "reasoning": "Brief explanation of why you chose this action",
-        "ticket_id": "The UUID of the existing ticket if action is 'update', otherwise null",
-        "suggested_ticket": {
-          "title": "Concise professional title",
-          "description": "Cleaned up summary of the request",
-          "priority": "low" | "medium" | "high" | "urgent",
-          "category": "security" | "setup" | "optimization" | "recovery" | "other",
-          "client_id": "The UUID of the matched client if found, otherwise null",
-          "client_name": "The name of the client identified from the email"
-        },
-        "suggested_update": {
-          "content": "A professional summary of the new information to be added as a comment",
-          "is_internal": false
-        }
+        "reasoning": "Overall summary of what you found in the email",
+        "suggestions": [
+          {
+            "action": "create" | "update" | "status_change",
+            "ticket_id": "UUID if update/status_change, else null",
+            "ticket_number": "Number if known, for display",
+            "ticket_title": "Current title if update, else null",
+            "new_status": "resolved" | "closed" | "open" | null,
+            "content": "Professional summary of the update or reason for status change",
+            "suggested_ticket": {
+              "title": "Title for new ticket",
+              "description": "Description for new ticket",
+              "priority": "low" | "medium" | "high" | "urgent",
+              "category": "security" | "setup" | "optimization" | "recovery" | "other",
+              "client_id": "UUID of matched client",
+              "client_name": "Name of matched client"
+            }
+          }
+        ]
       }
     `;
 
