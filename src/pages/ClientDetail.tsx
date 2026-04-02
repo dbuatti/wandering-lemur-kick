@@ -8,6 +8,7 @@ import TicketList from "@/components/ticketing/TicketList";
 import ClientAssetList from "@/components/clients/ClientAssetList";
 import SecurityHealth from "@/components/clients/SecurityHealth";
 import ClientForm from "@/components/clients/ClientForm";
+import EmailProcessor from "@/components/ticketing/EmailProcessor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,8 @@ import {
   Ticket,
   Database,
   Activity,
-  Edit2
+  Edit2,
+  Sparkles
 } from "lucide-react";
 import {
   Dialog,
@@ -31,6 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
@@ -42,13 +45,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ClientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [client, setClient] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const fetchClient = async () => {
     try {
@@ -132,25 +138,56 @@ const ClientDetail = () => {
                   </BreadcrumbList>
                 </Breadcrumb>
 
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-10 px-6 font-bold">
-                      <Edit2 className="mr-2 h-4 w-4" /> Edit Profile
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
-                    <DialogHeader className="mb-6">
-                      <DialogTitle className="text-2xl font-bold">Edit Client Profile</DialogTitle>
-                    </DialogHeader>
-                    <ClientForm 
-                      initialData={client}
-                      onSuccess={() => {
-                        setIsEditDialogOpen(false);
-                        fetchClient();
-                      }} 
-                    />
-                  </DialogContent>
-                </Dialog>
+                <div className="flex items-center gap-3">
+                  <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="rounded-xl border-primary/30 bg-primary/5 h-10 px-6 font-bold text-primary hover:bg-primary/10 group">
+                        <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" /> AI Email Processor
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[700px] bg-card border-white/10 text-white rounded-[2.5rem] p-8 overflow-hidden flex flex-col max-h-[90vh]">
+                      <DialogHeader className="mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                            <Mail className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <DialogTitle className="text-2xl font-bold">AI Email Processor</DialogTitle>
+                            <DialogDescription className="text-muted-foreground">
+                              Analyze email chains to update or create tickets for {client.display_name}.
+                            </DialogDescription>
+                          </div>
+                        </div>
+                      </DialogHeader>
+                      <div className="overflow-y-auto pr-2 custom-scrollbar">
+                        <EmailProcessor onComplete={() => {
+                          setIsEmailDialogOpen(false);
+                          queryClient.invalidateQueries({ queryKey: ['tickets'] });
+                        }} />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 h-10 px-6 font-bold">
+                        <Edit2 className="mr-2 h-4 w-4" /> Edit Profile
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+                      <DialogHeader className="mb-6">
+                        <DialogTitle className="text-2xl font-bold">Edit Client Profile</DialogTitle>
+                      </DialogHeader>
+                      <ClientForm 
+                        initialData={client}
+                        onSuccess={() => {
+                          setIsEditDialogOpen(false);
+                          fetchClient();
+                        }} 
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">

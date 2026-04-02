@@ -16,7 +16,8 @@ import {
   MessageSquare,
   X,
   BrainCircuit,
-  ShieldCheck
+  ShieldCheck,
+  PlusCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
