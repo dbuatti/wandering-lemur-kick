@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LayoutDashboard, Search, User, LogOut, Settings, Ticket, Users, FileText } from "lucide-react";
+import { Menu, X, LayoutDashboard, Search, User, LogOut, Settings, Ticket, Users, FileText, Lock } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -78,11 +78,16 @@ const Navbar = () => {
           ))}
           
           {!session ? (
-            <BookingDialog>
-              <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
-                Book Now
-              </Button>
-            </BookingDialog>
+            <div className="flex items-center gap-6">
+              <Link to="/login" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+                <Lock className="h-3 w-3" /> Login
+              </Link>
+              <BookingDialog>
+                <Button className="rounded-full px-6 h-10 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                  Book Now
+                </Button>
+              </BookingDialog>
+            </div>
           ) : (
             <div className="flex items-center gap-3 pl-4 border-l border-white/10">
               <Button 
@@ -166,14 +171,20 @@ const Navbar = () => {
                 ))}
                 <div className="pt-8 border-t border-white/10">
                   {!session ? (
-                    <>
-                      <p className="text-sm text-muted-foreground mb-4">Ready to start?</p>
+                    <div className="space-y-4">
+                      <Link 
+                        to="/login" 
+                        className="flex items-center justify-center w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest border border-white/10 hover:bg-white/5 transition-all"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Lock className="mr-2 h-4 w-4" /> Admin Login
+                      </Link>
                       <BookingDialog>
                         <Button className="w-full rounded-2xl h-14 text-sm font-bold uppercase tracking-widest">
                           Book a Consultation
                         </Button>
                       </BookingDialog>
-                    </>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       <Button 
