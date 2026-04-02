@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Shield, Search, Filter } from "lucide-react";
+import { Plus, Loader2, Shield, Search, Filter, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import ClientAssetCard from "./ClientAssetCard";
 import ClientAssetForm from "./ClientAssetForm";
+import BulkAssetImport from "./BulkAssetImport";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ClientAssetListProps {
@@ -25,6 +26,7 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
 
   const fetchAssets = async () => {
@@ -79,25 +81,47 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="h-11 px-6 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/10">
-              <Plus className="mr-2 h-4 w-4" /> Add Asset
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-bold">New Technical Asset</DialogTitle>
-              <DialogDescription>
-                Add a new device, login, or software license for this client.
-              </DialogDescription>
-            </DialogHeader>
-            <ClientAssetForm clientId={clientId} onSuccess={() => {
-              setIsDialogOpen(false);
-              fetchAssets();
-            }} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-3">
+          <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="h-11 px-6 rounded-xl border-primary/30 bg-primary/5 text-primary font-bold">
+                <Sparkles className="mr-2 h-4 w-4" /> Bulk Import
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-2xl font-bold">Bulk Asset Import</DialogTitle>
+                <DialogDescription>
+                  Import multiple credentials or devices using text or AI image analysis.
+                </DialogDescription>
+              </DialogHeader>
+              <BulkAssetImport clientId={clientId} onSuccess={() => {
+                setIsBulkOpen(false);
+                fetchAssets();
+              }} />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-11 px-6 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/10">
+                <Plus className="mr-2 h-4 w-4" /> Add Asset
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-2xl font-bold">New Technical Asset</DialogTitle>
+                <DialogDescription>
+                  Add a new device, login, or software license for this client.
+                </DialogDescription>
+              </DialogHeader>
+              <ClientAssetForm clientId={clientId} onSuccess={() => {
+                setIsDialogOpen(false);
+                fetchAssets();
+              }} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">

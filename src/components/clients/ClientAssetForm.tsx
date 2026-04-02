@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { Loader2, Save, Laptop, Key, AppWindow, FileText, Link as LinkIcon } from "lucide-react";
+import { Loader2, Save, Laptop, Key, AppWindow, FileText, Link as LinkIcon, Smartphone } from "lucide-react";
 
 const formSchema = z.object({
   asset_type: z.enum(['device', 'login', 'software', 'link', 'other']),
@@ -36,6 +36,7 @@ const formSchema = z.object({
   url: z.string().optional(),
   license_key: z.string().optional(),
   notes: z.string().optional(),
+  related_device_id: z.string().optional(),
 });
 
 interface ClientAssetFormProps {
@@ -46,6 +47,19 @@ interface ClientAssetFormProps {
 
 const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [devices, setDevices] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDevices = async () => {
+      const { data } = await supabase
+        .from('client_assets')
+        .select('id, name')
+        .eq('client_id', clientId)
+        .eq('asset_type', 'device');
+      setDevices(data || []);
+    };
+    fetchDevices();
+  }, [clientId]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,6 +77,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
       url: "",
       license_key: "",
       notes: "",
+      related_device_id: "",
     },
   });
 
@@ -157,7 +172,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
                 {assetType === 'device' ? 'Device Name (e.g. MacBook Pro)' : 
                  assetType === 'login' ? 'Service Name (e.g. iCloud)' :
                  assetType === 'software' ? 'Application Name' : 
-                 assetType === 'link' ? 'Document Title (e.g. Problem Reference)' : 'Title'}
+                 assetType === 'link' ? 'Document Title' : 'Title'}
               </FormLabel>
               <FormControl>
                 <Input placeholder="Enter name..." {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
@@ -166,6 +181,34 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
             </FormItem>
           )}
         />
+
+        {assetType === 'login' && devices.length > 0 && (
+          <FormField
+            control={form.control}
+            name="related_device_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Link to Device (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-white/5 border-white/10 h-12 rounded-xl">
+                      <SelectValue placeholder="Select a device" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-card border-white/10">
+                    <SelectItem value="none">No specific device</SelectItem>
+                    {devices.map(d => (
+                      <SelectItem key={d.id} value={d.id}>
+                        <div className="flex items-center gap-2"><Smartphone className="h-3 w-3" /> {d.name}</div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {assetType === 'device' && (
           <div className="grid grid-cols-2 gap-4">
@@ -242,38 +285,6 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
               )}
             />
           </div>
-        )}
-
-        {assetType === 'link' && (
-          <FormField
-            control={form.control}
-            name="url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Document URL</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://docs.google.com/..." {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {assetType === 'software' && (
-          <FormField
-            control={form.control}
-            name="license_key"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">License Key / Subscription ID</FormLabel>
-                <FormControl>
-                  <Input placeholder="XXXX-XXXX-XXXX" {...field} className="bg-white/5 border-white/10 h-12 rounded-xl" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         )}
 
         <FormField
