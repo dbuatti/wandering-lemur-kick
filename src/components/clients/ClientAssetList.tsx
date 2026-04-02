@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Shield, Search, Filter, Sparkles } from "lucide-react";
 import {
@@ -52,6 +52,14 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
       fetchAssets();
     }
   }, [clientId]);
+
+  const deviceMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    assets.forEach(a => {
+      if (a.asset_type === 'device') map[a.id] = a.name;
+    });
+    return map;
+  }, [assets]);
 
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,7 +168,12 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredAssets.map((asset) => (
-            <ClientAssetCard key={asset.id} asset={asset} onUpdate={fetchAssets} />
+            <ClientAssetCard 
+              key={asset.id} 
+              asset={asset} 
+              onUpdate={fetchAssets} 
+              deviceName={asset.details?.related_device_id ? deviceMap[asset.details.related_device_id] : undefined}
+            />
           ))}
         </div>
       )}

@@ -28,7 +28,6 @@ import { Loader2, Save, Laptop, Key, AppWindow, FileText, Link as LinkIcon, Smar
 const formSchema = z.object({
   asset_type: z.enum(['device', 'login', 'software', 'link', 'other']),
   name: z.string().min(2, "Name is required"),
-  // Flexible fields based on type
   serial_number: z.string().optional(),
   model: z.string().optional(),
   username: z.string().optional(),
@@ -43,9 +42,11 @@ interface ClientAssetFormProps {
   clientId: string;
   onSuccess: () => void;
   initialData?: any;
+  defaultType?: 'device' | 'login' | 'software' | 'link' | 'other';
+  defaultDeviceId?: string;
 }
 
-const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormProps) => {
+const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaultDeviceId }: ClientAssetFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
 
@@ -68,7 +69,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
       name: initialData.name,
       ...initialData.details
     } : {
-      asset_type: "device",
+      asset_type: defaultType || "device",
       name: "",
       serial_number: "",
       model: "",
@@ -77,7 +78,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
       url: "",
       license_key: "",
       notes: "",
-      related_device_id: "",
+      related_device_id: defaultDeviceId || "",
     },
   });
 
@@ -87,7 +88,6 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       const { asset_type, name, ...details } = values;
       
       const payload = {
@@ -182,7 +182,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData }: ClientAssetFormPr
           )}
         />
 
-        {assetType === 'login' && devices.length > 0 && (
+        {assetType === 'login' && (
           <FormField
             control={form.control}
             name="related_device_id"

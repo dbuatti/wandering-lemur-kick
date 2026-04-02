@@ -14,7 +14,9 @@ import {
   Edit2,
   Copy,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Plus,
+  Smartphone
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
@@ -26,15 +28,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ClientAssetForm from "./ClientAssetForm";
+import { cn } from "@/lib/utils";
 
 interface ClientAssetCardProps {
   asset: any;
   onUpdate: () => void;
+  deviceName?: string;
 }
 
-const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
+const ClientAssetCard = ({ asset, onUpdate, deviceName }: ClientAssetCardProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   const getIcon = () => {
     switch (asset.asset_type) {
@@ -70,10 +75,16 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
   };
 
   return (
-    <Card className="bg-white/5 border-white/10 hover:border-primary/30 transition-all group relative overflow-hidden">
-      <CardContent className="p-6">
+    <Card className={cn(
+      "bg-white/5 border-white/10 hover:border-primary/30 transition-all group relative overflow-hidden flex flex-col",
+      asset.asset_type === 'device' && "border-primary/10 bg-primary/[0.02]"
+    )}>
+      <CardContent className="p-6 flex-grow">
         <div className="flex justify-between items-start mb-4">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+          <div className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center",
+            asset.asset_type === 'device' ? "bg-primary/20 text-primary" : "bg-white/10 text-white/70"
+          )}>
             {getIcon()}
           </div>
           <div className="relative">
@@ -108,9 +119,16 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
         </div>
 
         <h4 className="font-bold text-white mb-1 truncate">{asset.name}</h4>
-        <Badge variant="outline" className="bg-white/5 text-[9px] uppercase tracking-widest text-muted-foreground mb-4">
-          {asset.asset_type === 'link' ? 'Document Link' : asset.asset_type}
-        </Badge>
+        <div className="flex items-center gap-2 mb-4">
+          <Badge variant="outline" className="bg-white/5 text-[9px] uppercase tracking-widest text-muted-foreground">
+            {asset.asset_type}
+          </Badge>
+          {deviceName && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] uppercase tracking-widest flex items-center gap-1">
+              <Smartphone className="h-2 w-2" /> {deviceName}
+            </Badge>
+          )}
+        </div>
 
         <div className="space-y-3">
           {asset.asset_type === 'device' && (
@@ -158,62 +176,23 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
                   </div>
                 </div>
               )}
-              {asset.details.url && (
-                <div className="pt-2">
-                  <a 
-                    href={asset.details.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-primary hover:underline flex items-center gap-1"
-                  >
-                    Visit Login Page <ExternalLink className="h-2 w-2" />
-                  </a>
+              {asset.details.password && (
+                <div className="text-xs text-muted-foreground flex justify-between items-center group/item">
+                  <span>Password</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-mono">••••••••</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-5 w-5 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                      onClick={() => copyToClipboard(asset.details.password, "Password")}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
-          )}
-
-          {asset.asset_type === 'link' && asset.details.url && (
-            <div className="pt-2">
-              <Button 
-                asChild
-                className="w-full h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20 transition-all group/link"
-              >
-                <a 
-                  href={asset.details.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest"
-                >
-                  Open Document <ExternalLink className="h-3 w-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                </a>
-              </Button>
-              <div className="mt-3 flex justify-center">
-                <button 
-                  onClick={() => copyToClipboard(asset.details.url, "URL")}
-                  className="text-[9px] text-muted-foreground hover:text-white flex items-center gap-1 uppercase tracking-tighter"
-                >
-                  <Copy className="h-2.5 w-2.5" /> Copy Link
-                </button>
-              </div>
-            </div>
-          )}
-
-          {asset.asset_type === 'software' && asset.details.license_key && (
-            <div className="text-xs text-muted-foreground flex flex-col gap-1">
-              <span>License Key</span>
-              <div className="flex items-center justify-between bg-black/20 p-2 rounded-lg group/item">
-                <span className="text-white font-mono text-[10px] truncate">{asset.details.license_key}</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 opacity-0 group-hover/item:opacity-100 transition-opacity"
-                  onClick={() => copyToClipboard(asset.details.license_key, "License key")}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
           )}
 
           {asset.details.notes && (
@@ -226,19 +205,45 @@ const ClientAssetCard = ({ asset, onUpdate }: ClientAssetCardProps) => {
         </div>
       </CardContent>
 
+      {asset.asset_type === 'device' && (
+        <div className="p-4 pt-0">
+          <Button 
+            variant="outline" 
+            className="w-full h-9 rounded-xl border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white text-[10px] font-bold uppercase tracking-widest transition-all"
+            onClick={() => setIsQuickAddOpen(true)}
+          >
+            <Plus className="h-3 w-3 mr-2" /> Add Password
+          </Button>
+        </div>
+      )}
+
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-2xl font-bold">Edit Asset</DialogTitle>
-            <DialogDescription>
-              Update the details for this technical asset.
-            </DialogDescription>
           </DialogHeader>
           <ClientAssetForm 
             clientId={asset.client_id} 
             initialData={asset}
             onSuccess={() => {
               setIsEditDialogOpen(false);
+              onUpdate();
+            }} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isQuickAddOpen} onOpenChange={setIsQuickAddOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-2xl font-bold">Add Password for {asset.name}</DialogTitle>
+          </DialogHeader>
+          <ClientAssetForm 
+            clientId={asset.client_id} 
+            defaultType="login"
+            defaultDeviceId={asset.id}
+            onSuccess={() => {
+              setIsQuickAddOpen(false);
               onUpdate();
             }} 
           />
