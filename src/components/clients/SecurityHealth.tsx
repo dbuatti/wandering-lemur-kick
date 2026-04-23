@@ -35,6 +35,7 @@ const SecurityHealth = ({ clientId }: SecurityHealthProps) => {
           .select('details')
           .eq('client_id', clientId)
           .eq('asset_type', 'security_audit')
+          .eq('name', 'Core Security Audit')
           .maybeSingle();
 
         if (data?.details?.completedIds) {
@@ -70,11 +71,12 @@ const SecurityHealth = ({ clientId }: SecurityHealthProps) => {
           name: 'Core Security Audit',
           details: { completedIds: newIds },
           updated_at: new Date().toISOString()
-        }, { onConflict: 'client_id,asset_type' });
+        }, { onConflict: 'client_id,asset_type,name' });
 
       if (error) throw error;
     } catch (e) {
-      showError("Failed to save security status");
+      console.error("Upsert error:", e);
+      showError("Failed to save security status. Ensure SQL constraints are applied.");
     } finally {
       setIsSaving(false);
     }
