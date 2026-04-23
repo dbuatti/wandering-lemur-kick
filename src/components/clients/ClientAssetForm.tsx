@@ -26,7 +26,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { Loader2, Save, Laptop, Key, AppWindow, FileText, Link as LinkIcon, Smartphone } from "lucide-react";
 
 const formSchema = z.object({
-  asset_type: z.enum(['device', 'login', 'software', 'link', 'other']),
+  asset_type: z.enum(['device', 'login', 'software', 'link', 'other', 'security_audit']),
   name: z.string().min(2, "Name is required"),
   serial_number: z.string().optional(),
   model: z.string().optional(),
@@ -90,7 +90,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaul
       const { data: { user } } = await supabase.auth.getUser();
       const { asset_type, name, ...details } = values;
       
-      const payload = {
+      const payload: any = {
         client_id: clientId,
         owner_user_id: user?.id,
         asset_type,
@@ -99,27 +99,28 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaul
         updated_at: new Date().toISOString()
       };
 
-      let error;
-      if (initialData) {
-        const { error: updateError } = await supabase
-          .from('client_assets')
-          .update(payload)
-          .eq('id', initialData.id);
-        error = updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('client_assets')
-          .insert([payload]);
-        error = insertError;
+      // If we are editing an existing record, include the ID
+      if (initialData?.id) {
+        payload.id = initialData.id;
       }
+
+      const { error } = await supabase
+        .from('client_assets')
+        .upsert(payload, { 
+          onConflict: initialData?.id ? 'id' : 'client_id,asset_type,name' 
+        });
 
       if (error) throw error;
 
       showSuccess(`Asset ${initialData ? 'updated' : 'added'} successfully`);
       onSuccess();
-    } catch (error) {
-      console.error(error);
-      showError("Failed to save asset");
+    } catch (error: any) {
+      console.error("Error saving asset:", error);
+      if (error.code === '23505') {
+        showError("An asset with this name and type already exists for this client.");
+      } else {
+        showError("Failed to save asset. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
