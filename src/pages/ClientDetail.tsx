@@ -177,6 +177,9 @@ const ClientDetail = () => {
                     <DialogContent className="sm:max-w-[600px] bg-card border-white/10 text-white rounded-[2.5rem] p-8">
                       <DialogHeader className="mb-6">
                         <DialogTitle className="text-2xl font-bold">Edit Client Profile</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                          Update contact information and account details for this client.
+                        </DialogDescription>
                       </DialogHeader>
                       <ClientForm 
                         initialData={client}
