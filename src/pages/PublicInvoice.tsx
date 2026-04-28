@@ -22,7 +22,6 @@ const PublicInvoice = () => {
   useEffect(() => {
     const fetchPublicInvoice = async () => {
       try {
-        // Fetch invoice using ID and token for security
         const { data: invoiceData, error: invoiceError } = await supabase
           .from('invoices')
           .select('*')
@@ -36,7 +35,6 @@ const PublicInvoice = () => {
 
         setInvoice(invoiceData);
 
-        // Fetch business settings for the owner of this invoice
         const { data: settingsData } = await supabase
           .from('settings')
           .select('*')
@@ -112,7 +110,6 @@ const PublicInvoice = () => {
 
         <Card className="bg-white border-none shadow-2xl rounded-[2.5rem] overflow-hidden text-slate-900">
           <CardContent className="p-8 md:p-16 space-y-12">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start gap-8">
               <div>
                 <div className="text-2xl font-black tracking-tighter mb-2 uppercase text-slate-900">
@@ -140,7 +137,6 @@ const PublicInvoice = () => {
               </div>
             </div>
 
-            {/* Bill To */}
             <div className="grid md:grid-cols-2 gap-12 pt-12 border-t border-slate-100">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Bill To</div>
@@ -158,21 +154,20 @@ const PublicInvoice = () => {
               </div>
             </div>
 
-            {/* Items Table */}
             <div className="pt-12 overflow-x-auto">
-              <table className="w-full min-w-[600px]">
+              <table className="w-full min-w-[600px] table-fixed">
                 <thead>
                   <tr className="border-b-2 border-slate-900 text-left">
                     <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Description</th>
-                    <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Qty</th>
-                    <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right">Rate</th>
-                    <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right">Amount</th>
+                    <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center w-20">Qty</th>
+                    <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right w-32">Rate</th>
+                    <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right w-32">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {invoice.line_items?.map((item: any, i: number) => (
                     <tr key={i}>
-                      <td className="py-8 font-semibold text-slate-900">{item.description}</td>
+                      <td className="py-8 pr-8 font-semibold text-slate-900 leading-relaxed">{item.description}</td>
                       <td className="py-8 text-center text-slate-600 font-medium">{item.quantity}</td>
                       <td className="py-8 text-right text-slate-600 font-medium">${item.unit_price?.toFixed(2)}</td>
                       <td className="py-8 text-right font-bold text-slate-900">${(item.quantity * item.unit_price).toFixed(2)}</td>
@@ -182,7 +177,6 @@ const PublicInvoice = () => {
               </table>
             </div>
 
-            {/* Totals */}
             <div className="flex justify-end pt-12">
               <div className="w-full md:w-72 space-y-4 bg-slate-50 p-8 rounded-3xl border border-slate-100">
                 <div className="flex justify-between text-sm font-medium">
@@ -202,7 +196,6 @@ const PublicInvoice = () => {
               </div>
             </div>
 
-            {/* Payment Info */}
             <div className="pt-12 border-t border-slate-100">
               <div className="grid md:grid-cols-2 gap-12">
                 <div>

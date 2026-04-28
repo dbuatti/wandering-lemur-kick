@@ -109,7 +109,6 @@ const InvoiceDetail = () => {
           
         if (ticketError) {
           console.error("Error closing associated tickets:", ticketError);
-          // We don't throw here because the invoice itself was successfully updated
         }
       }
 
@@ -257,22 +256,22 @@ const InvoiceDetail = () => {
                   </div>
 
                   <div className="pt-12">
-                    <table className="w-full">
+                    <table className="w-full table-fixed">
                       <thead>
                         <tr className="border-b-2 border-slate-900 text-left">
                           <th className="pb-4 text-[10px] font-bold uppercase tracking-widest">Description</th>
-                          <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-center">Qty</th>
-                          <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-right">Rate</th>
-                          <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-right">Amount</th>
+                          <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-center w-20">Qty</th>
+                          <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-right w-32">Rate</th>
+                          <th className="pb-4 text-[10px] font-bold uppercase tracking-widest text-right w-32">Amount</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {invoice.line_items?.map((item: any, i: number) => (
                           <tr key={i}>
-                            <td className="py-6 font-medium">{item.description}</td>
-                            <td className="py-6 text-center">{item.quantity}</td>
-                            <td className="py-6 text-right">${item.unit_price?.toFixed(2)}</td>
-                            <td className="py-6 text-right font-bold">${(item.quantity * item.unit_price).toFixed(2)}</td>
+                            <td className="py-8 pr-8 font-medium leading-relaxed">{item.description}</td>
+                            <td className="py-8 text-center text-slate-600">{item.quantity}</td>
+                            <td className="py-8 text-right text-slate-600">${item.unit_price?.toFixed(2)}</td>
+                            <td className="py-8 text-right font-bold">${(item.quantity * item.unit_price).toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>
