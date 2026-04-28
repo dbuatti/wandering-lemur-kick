@@ -27,9 +27,9 @@ import { Loader2, Plus, Trash2, Save } from "lucide-react";
 
 const lineItemSchema = z.object({
   description: z.string().min(1, "Description is required"),
-  quantity: z.number().min(0.01, "Quantity must be > 0"),
-  unit_price: z.number().min(0, "Price must be >= 0"),
-  tax_rate: z.number().default(0),
+  quantity: z.coerce.number().min(0.01, "Quantity must be > 0"),
+  unit_price: z.coerce.number().min(0, "Price must be >= 0"),
+  tax_rate: z.coerce.number().default(0),
 });
 
 const formSchema = z.object({
@@ -90,7 +90,6 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
         const status = settingsRes.data.company_tax_status;
         setTaxStatus(status);
         
-        // If not registered, update existing line items to 0% tax
         if (status === 'Not Registered' && !initialData) {
           const currentItems = form.getValues("line_items");
           form.setValue("line_items", currentItems.map(item => ({ ...item, tax_rate: 0 })));
@@ -147,7 +146,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
       onSuccess(result.data.id);
     } catch (error) {
       console.error(error);
-      showError("Failed to save invoice. Check console for details.");
+      showError("Failed to save invoice.");
     } finally {
       setIsSubmitting(false);
     }
@@ -268,14 +267,9 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                         <FormControl>
                           <Input 
                             type="number" 
-                            step="0.5" 
+                            step="any" 
                             placeholder="Qty" 
                             {...field} 
-                            value={field.value ?? ""}
-                            onChange={e => {
-                              const val = parseFloat(e.target.value);
-                              field.onChange(isNaN(val) ? 0 : val);
-                            }} 
                             className="bg-transparent border-white/10" 
                           />
                         </FormControl>
@@ -293,14 +287,9 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                         <FormControl>
                           <Input 
                             type="number" 
-                            step="0.01" 
+                            step="any" 
                             placeholder="Price" 
                             {...field} 
-                            value={field.value ?? ""}
-                            onChange={e => {
-                              const val = parseFloat(e.target.value);
-                              field.onChange(isNaN(val) ? 0 : val);
-                            }} 
                             className="bg-transparent border-white/10" 
                           />
                         </FormControl>
