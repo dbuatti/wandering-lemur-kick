@@ -261,7 +261,14 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input type="number" step="0.01" placeholder="Qty" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} className="bg-transparent border-white/10" />
+                          <Input 
+                            type="number" 
+                            step="0.5" 
+                            placeholder="Qty" 
+                            {...field} 
+                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                            className="bg-transparent border-white/10" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -275,7 +282,14 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input type="number" step="0.01" placeholder="Price" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} className="bg-transparent border-white/10" />
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="Price" 
+                            {...field} 
+                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                            className="bg-transparent border-white/10" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
