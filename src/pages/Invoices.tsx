@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -88,6 +89,9 @@ const Invoices = () => {
               <DialogContent className="sm:max-w-[800px] bg-card border-white/10 text-white rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="mb-6">
                   <DialogTitle className="text-2xl font-bold">New Invoice</DialogTitle>
+                  <DialogDescription className="text-muted-foreground">
+                    Generate a professional invoice for your IT support services.
+                  </DialogDescription>
                 </DialogHeader>
                 <InvoiceForm onSuccess={(id) => {
                   setIsCreateOpen(false);

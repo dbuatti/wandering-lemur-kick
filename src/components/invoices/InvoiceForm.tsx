@@ -38,7 +38,7 @@ const formSchema = z.object({
   due_date: z.string().min(1, "Due date is required"),
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']).default('draft'),
   line_items: z.array(lineItemSchema).min(1, "At least one line item is required"),
-  currency: z.string().default('AUD'),
+  company_currency: z.string().default('AUD'),
 });
 
 interface InvoiceFormProps {
@@ -58,13 +58,14 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
       ...initialData,
       invoice_date: initialData.invoice_date || new Date().toISOString().split('T')[0],
       due_date: initialData.due_date || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      company_currency: initialData.company_currency || initialData.currency || "AUD",
     } : {
       client_id: "",
       invoice_date: new Date().toISOString().split('T')[0],
       due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: "draft",
       line_items: [{ description: "IT Support Services", quantity: 1, unit_price: 0, tax_rate: 10 }],
-      currency: "AUD",
+      company_currency: "AUD",
     },
   });
 
@@ -101,8 +102,12 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
 
   const watchLineItems = form.watch("line_items");
   const totals = watchLineItems.reduce((acc, item) => {
-    const subtotal = (item.quantity || 0) * (item.unit_price || 0);
-    const tax = subtotal * ((item.tax_rate || 0) / 100);
+    const qty = Number(item.quantity) || 0;
+    const price = Number(item.unit_price) || 0;
+    const taxRate = Number(item.tax_rate) || 0;
+    
+    const subtotal = qty * price;
+    const tax = subtotal * (taxRate / 100);
     return {
       untaxed: acc.untaxed + subtotal,
       tax: acc.tax + tax,
@@ -142,7 +147,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
       onSuccess(result.data.id);
     } catch (error) {
       console.error(error);
-      showError("Failed to save invoice");
+      showError("Failed to save invoice. Check console for details.");
     } finally {
       setIsSubmitting(false);
     }
@@ -266,7 +271,11 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                             step="0.5" 
                             placeholder="Qty" 
                             {...field} 
-                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                            value={field.value ?? ""}
+                            onChange={e => {
+                              const val = parseFloat(e.target.value);
+                              field.onChange(isNaN(val) ? 0 : val);
+                            }} 
                             className="bg-transparent border-white/10" 
                           />
                         </FormControl>
@@ -287,7 +296,11 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                             step="0.01" 
                             placeholder="Price" 
                             {...field} 
-                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                            value={field.value ?? ""}
+                            onChange={e => {
+                              const val = parseFloat(e.target.value);
+                              field.onChange(isNaN(val) ? 0 : val);
+                            }} 
                             className="bg-transparent border-white/10" 
                           />
                         </FormControl>
@@ -298,7 +311,7 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
                 </div>
                 <div className="col-span-4 md:col-span-2 flex items-center gap-2">
                   <div className="text-right flex-1 font-bold text-sm">
-                    ${((watchLineItems[index]?.quantity || 0) * (watchLineItems[index]?.unit_price || 0)).toFixed(2)}
+                    ${((Number(watchLineItems[index]?.quantity) || 0) * (Number(watchLineItems[index]?.unit_price) || 0)).toFixed(2)}
                   </div>
                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 text-red-400 hover:bg-red-400/10">
                     <Trash2 className="h-4 w-4" />
