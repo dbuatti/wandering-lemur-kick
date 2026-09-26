@@ -3,7 +3,7 @@
 import React, { useEffect, useState, type ComponentProps } from 'react';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import DashboardStats from "@/components/dashboard/DashboardStats";
+import DashboardStats, { type DashboardStatsData } from "@/components/dashboard/DashboardStats";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import QuickActions from "@/components/dashboard/QuickActions";
 import SystemHealth from "@/components/dashboard/SystemHealth";
@@ -20,15 +20,25 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { Client, Ticket as TicketRow } from "@/integrations/supabase/types";
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const ACTIVE_STATUSES = ['open', 'in_progress', 'pending'];
+const DONE_STATUSES = ['resolved', 'closed'];
+const PRIORITY_RANK: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStatsData>({
     totalClients: 0,
+    newClients30d: 0,
     activeTickets: 0,
+    urgentTickets: 0,
+    newTickets30d: 0,
     totalHours: 0,
-    resolvedTickets: 0
+    ticketsWithHours: 0,
+    resolvedTickets: 0,
+    resolved30d: 0,
   });
   const [activities, setActivities] = useState<ComponentProps<typeof RecentActivity>["activities"]>([]);
   const [myTickets, setMyTickets] = useState<TicketRow[]>([]);
@@ -45,65 +55,97 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const [clientsRes, ticketsRes, resolvedRes, recentClientsRes] = await Promise.all([
-        supabase.from('clients').select('id', { count: 'exact' }),
-        supabase.from('tickets').select('id, actual_hours, category', { count: 'exact' }).neq('status', 'closed'),
-        supabase.from('tickets').select('id', { count: 'exact' }).eq('status', 'resolved'),
-        supabase.from('clients').select('*').order('created_at', { ascending: false }).limit(3)
+      const since = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
+
+      const [clientsRes, newClientsRes, recentClientsRes, ticketsRes, commentsRes] = await Promise.all([
+        // Match the Clients page, which only lists IT clients
+        supabase.from('clients').select('id', { count: 'exact', head: true }).eq('is_it_client', true),
+        supabase.from('clients').select('id', { count: 'exact', head: true }).eq('is_it_client', true).gte('created_at', since),
+        supabase.from('clients').select('*').eq('is_it_client', true).order('created_at', { ascending: false }).limit(3),
+        supabase
+          .from('tickets')
+          .select('id, title, status, priority, category, actual_hours, client_display_name, owner_user_id, assigned_to, created_at, updated_at'),
+        supabase
+          .from('ticket_comments')
+          .select('id, ticket_id, user_id, is_internal, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5),
       ]);
 
-      const totalHours = ticketsRes.data?.reduce((acc, t) => acc + (t.actual_hours || 0), 0) || 0;
+      const tickets = ticketsRes.data || [];
+      const active = tickets.filter(t => ACTIVE_STATUSES.includes(t.status ?? ''));
+      const done = tickets.filter(t => DONE_STATUSES.includes(t.status ?? ''));
+      const withHours = tickets.filter(t => (t.actual_hours || 0) > 0);
 
       const categories: Record<string, number> = {};
-      ticketsRes.data?.forEach(t => {
+      active.forEach(t => {
         const cat = t.category || 'other';
         categories[cat] = (categories[cat] || 0) + 1;
       });
-      
-      const formattedCategories = Object.entries(categories).map(([name, value]) => ({
+
+      setCategoryData(Object.entries(categories).map(([name, value]) => ({
         name: name.charAt(0).toUpperCase() + name.slice(1),
         value
-      }));
-
-      setCategoryData(formattedCategories);
+      })));
       setRecentClients(recentClientsRes.data || []);
       setStats({
         totalClients: clientsRes.count || 0,
-        activeTickets: ticketsRes.count || 0,
-        totalHours: Math.round(totalHours),
-        resolvedTickets: resolvedRes.count || 0
+        newClients30d: newClientsRes.count || 0,
+        activeTickets: active.length,
+        urgentTickets: active.filter(t => t.priority === 'urgent' || t.priority === 'high').length,
+        newTickets30d: tickets.filter(t => t.created_at && t.created_at >= since).length,
+        totalHours: Math.round(withHours.reduce((acc, t) => acc + (t.actual_hours || 0), 0) * 10) / 10,
+        ticketsWithHours: withHours.length,
+        resolvedTickets: done.length,
+        // No resolved_at column, so last update time stands in for when it was resolved
+        resolved30d: done.filter(t => t.updated_at && t.updated_at >= since).length,
       });
 
-      if (user) {
-        const { data: assignedTickets } = await supabase
-          .from('tickets')
-          .select('*')
-          .eq('assigned_to', user.id)
-          .neq('status', 'closed')
-          .neq('status', 'resolved')
-          .order('priority', { ascending: false })
-          .limit(3);
-        
-        setMyTickets(assignedTickets || []);
-      }
+      // Tickets aren't always assigned, so include open tickets you own too
+      const mine = active
+        .filter(t => user && (t.assigned_to === user.id || (!t.assigned_to && t.owner_user_id === user.id)))
+        .sort((a, b) =>
+          (PRIORITY_RANK[a.priority ?? ''] ?? 9) - (PRIORITY_RANK[b.priority ?? ''] ?? 9) ||
+          (a.created_at ?? '').localeCompare(b.created_at ?? ''));
+      setMyTickets(mine as TicketRow[]);
 
-      const { data: recentTickets } = await supabase
-        .from('tickets')
-        .select('id, title, client_display_name, created_at, status')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const ticketTitles = new Map(tickets.map(t => [t.id, t.title]));
+      const feed: ComponentProps<typeof RecentActivity>["activities"] = [
+        ...[...tickets]
+          .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+          .slice(0, 5)
+          .map(t => ({
+            id: `ticket-${t.id}`,
+            type: 'ticket' as const,
+            title: 'New Ticket Created',
+            description: t.client_display_name ? `${t.title} for ${t.client_display_name}` : t.title,
+            timestamp: t.created_at ?? '',
+            user: 'System'
+          })),
+        ...(recentClientsRes.data || []).map(c => ({
+          id: `client-${c.id}`,
+          type: 'client' as const,
+          title: 'Client Added',
+          description: c.display_name,
+          timestamp: c.created_at ?? '',
+          user: 'You'
+        })),
+        ...(commentsRes.data || []).map(c => ({
+          id: `comment-${c.id}`,
+          type: 'comment' as const,
+          title: c.is_internal ? 'Internal Note Added' : 'Comment Added',
+          description: ticketTitles.get(c.ticket_id ?? '') ?? 'Ticket',
+          timestamp: c.created_at ?? '',
+          user: c.user_id === user?.id ? 'You' : 'Client'
+        })),
+      ];
 
-      const formattedActivities = recentTickets?.map(t => ({
-        id: t.id,
-        type: 'ticket' as const,
-        title: 'New Ticket Created',
-        description: `${t.title} for ${t.client_display_name}`,
-        timestamp: t.created_at,
-        user: 'System'
-      })) || [];
-
-      setActivities(formattedActivities);
+      setActivities(
+        feed
+          .filter(a => a.timestamp)
+          .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+          .slice(0, 6)
+      );
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -157,7 +199,10 @@ const Dashboard = () => {
                     Business <span className="text-primary">Overview.</span>
                   </h1>
                   <p className="text-lg text-muted-foreground font-light max-w-2xl">
-                    Everything is running smoothly. Press <kbd className="px-2 py-1 rounded bg-white/10 text-xs font-mono">⌘K</kbd> to search anything.
+                    {stats.activeTickets === 0
+                      ? "No open tickets right now."
+                      : `${stats.activeTickets} open ticket${stats.activeTickets === 1 ? '' : 's'}${stats.urgentTickets ? `, ${stats.urgentTickets} high priority` : ''}.`}{' '}
+                    Press <kbd className="px-2 py-1 rounded bg-white/10 text-xs font-mono">⌘K</kbd> to search anything.
                   </p>
                 </div>
                 <div className="flex gap-4">
@@ -192,7 +237,7 @@ const Dashboard = () => {
                         <CardTitle className="text-xl font-bold">My Workload</CardTitle>
                       </div>
                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        {myTickets.length} Active
+                        {myTickets.length} Open
                       </Badge>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -201,11 +246,11 @@ const Dashboard = () => {
                           <div className="h-12 w-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Ticket className="h-6 w-6 text-muted-foreground" />
                           </div>
-                          <p className="text-muted-foreground text-sm">No tickets currently assigned to you.</p>
+                          <p className="text-muted-foreground text-sm">No open tickets assigned to you.</p>
                         </div>
                       ) : (
                         <div className="divide-y divide-white/5">
-                          {myTickets.map((ticket) => (
+                          {myTickets.slice(0, 5).map((ticket) => (
                             <Link 
                               key={ticket.id} 
                               to={`/tickets/${ticket.id}`}
