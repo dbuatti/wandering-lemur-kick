@@ -181,7 +181,6 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
       const newComment: CommentWithAuthor = {
         ticket_id: ticketId,
         user_id: user.id,
-        updated_at: null,
         id: data.comment_id,
         content: trimmedContent,
         user: {

@@ -1,8 +1,9 @@
 // Database types in the shape produced by `supabase gen types typescript`.
 //
 // Hand-written from the SQL in this folder plus the columns the app reads and
-// writes (clients, invoices, settings and ticket_ai_analyses have no schema
-// file here). Regenerate and replace this file when CLI access is available:
+// writes, then checked against the live database's information_schema
+// (the SQL files here are not an exact record of the live schema).
+// Regenerate and replace this file when CLI access is available:
 //   npx supabase gen types typescript --project-id gjzjrhredmheepmgpnjk > src/integrations/supabase/types.ts
 
 export type Json =
@@ -130,7 +131,6 @@ export type Database = {
       };
       settings: {
         Row: {
-          id: string;
           owner_user_id: string;
           company_name: string | null;
           company_abn: string | null;
@@ -143,11 +143,9 @@ export type Database = {
           invoice_prefix: string | null;
           invoice_next_number: number | null;
           payment_terms: string | null;
-          created_at: string | null;
           updated_at: string | null;
         };
         Insert: {
-          id?: string;
           owner_user_id: string;
           company_name?: string | null;
           company_abn?: string | null;
@@ -160,7 +158,6 @@ export type Database = {
           invoice_prefix?: string | null;
           invoice_next_number?: number | null;
           payment_terms?: string | null;
-          created_at?: string | null;
           updated_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["settings"]["Insert"]>;
@@ -184,14 +181,12 @@ export type Database = {
           tags: string[] | null;
           estimated_hours: number | null;
           actual_hours: number | null;
-          internal_notes: string | null;
           owner_user_id: string | null;
           assigned_to: string | null;
           related_invoice_id: string | null;
           related_quote_id: string | null;
           created_at: string | null;
           updated_at: string | null;
-          resolved_at: string | null;
         };
         Insert: {
           id?: string;
@@ -210,14 +205,12 @@ export type Database = {
           tags?: string[] | null;
           estimated_hours?: number | null;
           actual_hours?: number | null;
-          internal_notes?: string | null;
           owner_user_id?: string | null;
           assigned_to?: string | null;
           related_invoice_id?: string | null;
           related_quote_id?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
-          resolved_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["tickets"]["Insert"]>;
         Relationships: [
@@ -245,7 +238,6 @@ export type Database = {
           content: string;
           is_internal: boolean | null;
           created_at: string | null;
-          updated_at: string | null;
         };
         Insert: {
           id?: string;
@@ -254,7 +246,6 @@ export type Database = {
           content: string;
           is_internal?: boolean | null;
           created_at?: string | null;
-          updated_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["ticket_comments"]["Insert"]>;
         Relationships: [

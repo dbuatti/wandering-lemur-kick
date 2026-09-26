@@ -29,7 +29,7 @@ const Scratchpad = () => {
   };
 
   return (
-    <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden h-full flex flex-col">
+    <Card className="bg-white/5 border-white/10 rounded-[2rem] overflow-hidden flex flex-col">
       <CardHeader className="border-b border-white/5 px-8 py-6 flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
           <StickyNote className="h-5 w-5 text-primary" />
@@ -57,7 +57,7 @@ const Scratchpad = () => {
       <CardContent className="p-0 flex-grow">
         <Textarea 
           placeholder="Quick notes, reminders, or snippets..."
-          className="w-full h-full min-h-[200px] bg-transparent border-none focus-visible:ring-0 p-8 text-lg font-light resize-none custom-scrollbar"
+          className="w-full min-h-[240px] bg-transparent border-none focus-visible:ring-0 p-8 text-lg font-light resize-none custom-scrollbar"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={handleSave}
