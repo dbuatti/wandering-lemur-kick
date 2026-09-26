@@ -4,33 +4,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { faqs } from "@/content/services";
 
 const FAQ = () => {
-  const faqs = [
-    {
-      question: "Do you provide on-site support in Melbourne?",
-      answer: "Yes, I provide on-site support across Melbourne, particularly in the inner suburbs and Bayside areas. I also offer secure remote support for other locations."
-    },
-    {
-      question: "Do you work with Windows or just Apple?",
-      answer: "While I am an Apple Specialist, I often manage mixed environments. I can help ensure Windows-based tools work correctly within your Apple ecosystem."
-    },
-    {
-      question: "How do you handle sensitive data and privacy?",
-      answer: "Privacy is a priority. I use professional encryption, do not store your passwords, and can perform privacy audits to ensure your data is secure."
-    },
-    {
-      question: "Is there a minimum booking time?",
-      answer: "For on-site visits, there is a 1-hour minimum. Remote support can be booked in 30-minute increments."
-    }
-  ];
-
   return (
-    <section className="section-padding bg-background">
+    <section className="section-padding bg-black/40" aria-labelledby="faq-heading">
       <div className="container px-6 mx-auto">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Common Questions</h2>
+            <h2 id="faq-heading" className="text-4xl font-bold mb-4">Common Questions</h2>
             <p className="text-muted-foreground">Information about the service and how I work.</p>
           </div>
           
@@ -40,7 +22,7 @@ const FAQ = () => {
                 <AccordionTrigger className="text-left font-bold hover:no-underline py-6">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-light pb-6 leading-relaxed">
+                <AccordionContent forceMount className="text-muted-foreground font-light pb-6 leading-relaxed [[data-state=closed]>&]:hidden">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

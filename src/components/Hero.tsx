@@ -12,17 +12,17 @@ const Hero = () => {
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center justify-center px-4 py-1 rounded-full bg-primary/10 border border-primary/20 mb-8 lg:mb-12">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-              Melbourne • Private Appointments
+              Melbourne IT Support • On-site & Remote
             </span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl lg:text-[8rem] font-bold text-white mb-8 lg:mb-12 leading-[1] lg:leading-[0.9] tracking-tighter">
-            Digital <br className="hidden sm:block" />
-            <span className="text-primary">Architecture.</span>
+          <h1 className="text-[2.6rem] sm:text-5xl md:text-7xl lg:text-[7rem] font-bold text-white mb-8 lg:mb-12 leading-[1] lg:leading-[0.9] tracking-tighter">
+            IT support for <br className="hidden sm:block" />
+            <span className="text-primary">creative professionals.</span>
           </h1>
           
-          <p className="text-lg lg:text-2xl text-muted-foreground mb-12 font-light leading-relaxed max-w-2xl mx-auto px-4">
-            I set up calm, secure, and reliable digital systems for professionals who need their technology to work perfectly every time.
+          <p className="text-lg lg:text-2xl text-muted-foreground mb-12 font-light leading-relaxed max-w-3xl mx-auto px-4">
+            I'm Daniele, a Musical Director and IT specialist. I set up calm, secure, reliable technology for performers, directors, producers and arts companies across Melbourne, so nothing stops the show.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center px-4">

@@ -3,7 +3,7 @@ import dyadComponentTagger from "@dyad-sh/react-vite-component-tagger";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-export default defineConfig(() => ({
+export default defineConfig(({ isSsrBuild }) => ({
   server: {
     host: "::",
     port: 8080,
@@ -13,10 +13,12 @@ export default defineConfig(() => ({
     rollupOptions: {
       output: {
         // Long-lived vendor chunks so app deploys don't bust library caches
-        manualChunks: {
-          react: ["react", "react-dom", "react-router-dom"],
-          supabase: ["@supabase/supabase-js"],
-        },
+        manualChunks: isSsrBuild
+          ? undefined
+          : {
+              react: ["react", "react-dom", "react-router-dom"],
+              supabase: ["@supabase/supabase-js"],
+            },
       },
     },
   },

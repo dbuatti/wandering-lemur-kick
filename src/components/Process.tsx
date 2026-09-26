@@ -1,4 +1,6 @@
-import { Search, Settings, Shield, Zap } from "lucide-react";
+import { Search, Settings, Shield, Zap, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import BookingDialog from "./BookingDialog";
 
 const Process = () => {
   const steps = [
@@ -25,12 +27,13 @@ const Process = () => {
   ];
 
   return (
-    <section className="section-padding bg-black/20">
+    <section className="section-padding bg-black/20" aria-labelledby="process-heading">
       <div className="container px-6 mx-auto">
         <div className="max-w-3xl mb-20">
-          <h2 className="text-4xl lg:text-6xl font-bold mb-6">The <span className="text-primary">Process.</span></h2>
+          <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">How It Works</div>
+          <h2 id="process-heading" className="text-4xl lg:text-6xl font-bold mb-6">From chaos to <span className="text-primary">calm.</span></h2>
           <p className="text-xl text-muted-foreground font-light">
-            A straightforward approach to getting your technology organised and secure.
+            A straightforward approach to getting your technology organised and secure. It starts with a conversation.
           </p>
         </div>
 
@@ -47,6 +50,14 @@ const Process = () => {
               </p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-16">
+          <BookingDialog>
+            <Button className="h-14 px-10 rounded-full text-sm font-bold hover:scale-105 transition-all duration-300">
+              Book a Consultation <ArrowRight className="ml-3 h-4 w-4" />
+            </Button>
+          </BookingDialog>
         </div>
       </div>
     </section>

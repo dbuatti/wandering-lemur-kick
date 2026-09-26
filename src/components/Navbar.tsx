@@ -43,9 +43,10 @@ const Navbar = () => {
     { name: "Clients", href: "/clients", icon: <Users className="h-4 w-4" /> },
     { name: "Invoices", href: "/invoices", icon: <FileText className="h-4 w-4" /> },
   ] : [
-    { name: "Security", href: "/#security" },
-    { name: "Clean Sweep", href: "/#clean-sweep" },
-    { name: "Tiers", href: "/#tiers" },
+    { name: "Who I Help", href: "/#who" },
+    { name: "Services", href: "/#services" },
+    { name: "Pricing", href: "/#tiers" },
+    { name: "FAQ", href: "/#faq" },
   ];
 
   const openCommandMenu = () => {

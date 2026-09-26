@@ -48,3 +48,19 @@ supabase/
 
 Portal routes are lazy-loaded so visitors to the public site don't download
 the admin bundle.
+
+## SEO and the build
+
+`pnpm build` also renders the home page to static HTML (`src/entry-server.tsx`
+and `scripts/prerender.mjs`), so search engines and link previews see real
+content. It writes:
+
+- `dist/index.html`: prerendered home page with canonical URL, Open Graph tags
+  and JSON-LD structured data (business details, prices, FAQ)
+- `dist/app.html`: empty `noindex` shell that `vercel.json` serves for every
+  other route (portal, login, public invoices, 404s)
+- `dist/sitemap.xml` and `dist/robots.txt`
+
+Business details (site URL, email, phone, area) live in `src/content/site.ts`;
+prices and FAQs in `src/content/services.ts`. Change the URL there when moving
+to a custom domain.
