@@ -14,7 +14,7 @@ const SecurityConcrete = () => {
   ];
 
   return (
-    <section className="section-padding bg-background">
+    <section className="section-padding bg-black">
       <div className="container px-6 mx-auto">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">

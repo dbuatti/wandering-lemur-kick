@@ -7,7 +7,10 @@ const FounderStatement = () => {
         <div className="max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-16 items-center">
             <div className="lg:col-span-7">
-              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-8">Founder Statement</div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">About Daniele</div>
+              <h2 className="text-4xl lg:text-5xl font-bold mb-10 leading-tight">
+                A Musical Director who <span className="text-primary">fixes technology.</span>
+              </h2>
               <div className="space-y-8 text-xl lg:text-2xl text-white font-light leading-relaxed">
                 <p>
                   I started this service because I saw how much time and energy is wasted on technical issues.
@@ -26,7 +29,7 @@ const FounderStatement = () => {
                 </div>
                 <div>
                   <div className="text-xl font-bold text-white">Daniele Buatti</div>
-                  <div className="text-sm text-muted-foreground">Digital Specialist</div>
+                  <div className="text-sm text-muted-foreground">Musical Director &amp; IT Specialist</div>
                 </div>
               </div>
             </div>

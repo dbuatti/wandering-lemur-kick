@@ -1,45 +1,21 @@
 "use client";
 
 import { ArrowUpRight, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { tiers } from "@/content/services";
+import BookingDialog from "./BookingDialog";
 
 const ServiceTiers = () => {
-  const tiers = [
-    {
-      id: "01",
-      name: "Maintenance",
-      subtitle: "Keep things running.",
-      rate: "100",
-      focus: "For professionals who want:",
-      features: ["Fast troubleshooting", "Device setup", "Basic security checks", "Ongoing support access"]
-    },
-    {
-      id: "02",
-      name: "Optimization",
-      subtitle: "Save time and reduce frustration.",
-      rate: "130",
-      focus: "Includes:",
-      features: ["Workflow review", "File system organisation", "Cloud consolidation", "Security review", "Basic automation", "Subscription audit"]
-    },
-    {
-      id: "03",
-      name: "Recovery & Resilience",
-      subtitle: "When things go wrong.",
-      rate: "150",
-      focus: "Includes:",
-      features: ["Data recovery help", "Full system rebuild", "Secure migration", "Emergency response", "Long-term backup planning"]
-    }
-  ];
-
   return (
-    <section className="section-padding bg-black">
+    <section className="section-padding bg-black" aria-labelledby="tiers-heading">
       <div className="container px-6 mx-auto">
         <div className="flex flex-col lg:flex-row justify-between items-end mb-24 gap-8">
           <div className="max-w-2xl">
             <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">Pricing</div>
-            <h2 className="text-5xl lg:text-7xl font-bold">Service Tiers</h2>
+            <h2 id="tiers-heading" className="text-5xl lg:text-7xl font-bold">Service Tiers</h2>
           </div>
           <p className="text-lg text-muted-foreground font-light max-w-xs">
-            Clear, outcome-based pricing for reliable digital systems.
+            Simple hourly rates in AUD. On-site visits have a 1-hour minimum; remote support is booked in 30-minute blocks.
           </p>
         </div>
         
@@ -71,6 +47,15 @@ const ServiceTiers = () => {
               </ul>
             </div>
           ))}
+        </div>
+
+        <div className="mt-16 flex flex-col sm:flex-row items-center justify-between gap-6 p-8 lg:p-10 rounded-[2rem] bg-primary/5 border border-primary/10">
+          <p className="text-lg text-white font-light text-center sm:text-left">
+            Not sure which tier fits? Book a consultation and I'll recommend one.
+          </p>
+          <BookingDialog>
+            <Button className="h-12 px-8 rounded-full text-sm font-bold flex-shrink-0">Book a Consultation</Button>
+          </BookingDialog>
         </div>
       </div>
     </section>

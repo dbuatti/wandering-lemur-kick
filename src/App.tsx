@@ -22,15 +22,18 @@ const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Login = lazy(() => import("./pages/Login"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-      refetchOnWindowFocus: false,
+export const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30_000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
     },
-  },
-});
+  });
+
+const queryClient = createQueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
@@ -59,6 +62,26 @@ const PostLoginRedirect = () => {
   return null;
 };
 
+// React Router doesn't scroll to #anchors on its own, so in-page nav links need this
+const ScrollToHash = () => {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    // Wait a frame so the target section has rendered
+    const id = decodeURIComponent(hash.slice(1));
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname, hash]);
+
+  return null;
+};
+
 const protectedRoutes = [
   { path: "/dashboard", element: <Dashboard /> },
   { path: "/tickets", element: <Tickets /> },
@@ -70,33 +93,47 @@ const protectedRoutes = [
   { path: "/settings", element: <Settings /> },
 ];
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+// Shared by the browser entry and the build-time prerender (src/entry-server.tsx)
+export const AppProviders = ({ client, children }: { client: QueryClient; children: React.ReactNode }) => (
+  <QueryClientProvider client={client}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <PostLoginRedirect />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/invoice/view/:id" element={<PublicInvoice />} />
-              {protectedRoutes.map(({ path, element }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={<ProtectedRoute>{element}</ProtectedRoute>}
-                />
-              ))}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+        {children}
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
+);
+
+export const AppRoutes = () => (
+  <>
+    <PostLoginRedirect />
+    <ScrollToHash />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/invoice/view/:id" element={<PublicInvoice />} />
+        {protectedRoutes.map(({ path, element }) => (
+          <Route
+            key={path}
+            path={path}
+            element={<ProtectedRoute>{element}</ProtectedRoute>}
+          />
+        ))}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  </>
+);
+
+const App = () => (
+  <AppProviders client={queryClient}>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  </AppProviders>
 );
 
 export default App;
