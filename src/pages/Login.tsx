@@ -4,26 +4,24 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
+import PageLoader from '@/components/PageLoader';
 
 const Login = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/dashboard';
 
   useEffect(() => {
-    console.log("[Login] Session state:", { session, isLoading });
     if (session) {
-      navigate('/dashboard');
+      navigate(from, { replace: true });
     }
-  }, [session, isLoading, navigate]);
+  }, [session, navigate, from]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-white animate-pulse">Initializing...</div>
-      </div>
-    );
+    return <PageLoader label="Initializing..." />;
   }
 
   return (
