@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,8 +17,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import EnquiryForm from "./EnquiryForm";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+const EnquiryForm = lazy(() => import("./EnquiryForm"));
 
 interface ContactDialogProps {
   children: React.ReactNode;
@@ -29,7 +30,9 @@ const ContactDialog = ({ children }: ContactDialogProps) => {
 
   const FormContent = () => (
     <div className="space-y-6">
-      <EnquiryForm />
+      <Suspense fallback={<div className="min-h-[480px]" aria-hidden="true" />}>
+        <EnquiryForm />
+      </Suspense>
       <div className="pt-6 border-t border-white/5 text-center">
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           Based in Melbourne, Australia • Available for On-site & Remote
