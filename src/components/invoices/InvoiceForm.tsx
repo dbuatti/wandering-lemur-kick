@@ -24,6 +24,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2, Plus, Trash2, Save } from "lucide-react";
+import type { Client, InvoiceRecord } from "@/integrations/supabase/types";
 
 const lineItemSchema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -42,13 +43,13 @@ const formSchema = z.object({
 });
 
 interface InvoiceFormProps {
-  initialData?: any;
+  initialData?: InvoiceRecord;
   onSuccess: (invoiceId: string) => void;
 }
 
 const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Pick<Client, "id" | "display_name">[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [taxStatus, setTaxStatus] = useState<string>("GST Registered");
 
@@ -56,9 +57,10 @@ const InvoiceForm = ({ initialData, onSuccess }: InvoiceFormProps) => {
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
+      status: (initialData.status || 'draft') as z.infer<typeof formSchema>["status"],
       invoice_date: initialData.invoice_date || new Date().toISOString().split('T')[0],
       due_date: initialData.due_date || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      company_currency: initialData.company_currency || initialData.currency || "AUD",
+      company_currency: initialData.company_currency || "AUD",
     } : {
       client_id: "",
       invoice_date: new Date().toISOString().split('T')[0],

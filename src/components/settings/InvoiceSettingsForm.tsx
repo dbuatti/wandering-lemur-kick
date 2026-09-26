@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { BankingDetails } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2, Save, Building2, ShieldCheck, CreditCard, Clock } from "lucide-react";
@@ -73,19 +74,20 @@ const InvoiceSettingsForm = () => {
           .maybeSingle();
 
         if (data) {
+          const banking = (data.company_banking_details ?? {}) as BankingDetails;
           form.reset({
             company_name: data.company_name || "",
             company_abn: data.company_abn || "",
             company_email: data.company_email || "",
             company_phone: data.company_phone || "",
             company_website: data.company_website || "",
-            company_tax_status: (data.company_tax_status as any) || "GST Registered",
+            company_tax_status: (data.company_tax_status as z.infer<typeof formSchema>["company_tax_status"]) || "GST Registered",
             sender_name: data.sender_name || "",
             invoice_prefix: data.invoice_prefix || "INV-",
             invoice_next_number: data.invoice_next_number || 1,
-            bank_name: data.company_banking_details?.bank_name || "",
-            bsb: data.company_banking_details?.bsb || "",
-            account_number: data.company_banking_details?.account_number || "",
+            bank_name: banking.bank_name || "",
+            bsb: banking.bsb || "",
+            account_number: banking.account_number || "",
             payment_terms: data.payment_terms || "14 days",
           });
         }

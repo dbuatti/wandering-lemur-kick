@@ -11,26 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { Ticket } from "@/integrations/supabase/types";
 
 interface TicketCardProps {
-  ticket: {
-    id: string;
-    ticket_number?: number;
-    title: string;
-    description: string;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    status: 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
-    category: 'security' | 'setup' | 'optimization' | 'recovery' | 'other';
-    created_at: string;
-    updated_at: string;
-    client_display_name: string;
-    owner_user_id: string;
-    assigned_to: string | null;
-    estimated_hours: number | null;
-    actual_hours: number | null;
-    tags: string[];
-    related_invoice_id?: string;
-  };
+  ticket: Ticket;
   viewMode?: 'grid' | 'list';
   onStatusChange: (ticketId: string, status: string) => void;
   onAssign: (ticketId: string, userId: string | null) => void;

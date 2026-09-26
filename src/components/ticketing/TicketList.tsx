@@ -44,6 +44,7 @@ import TicketForm from "./TicketForm";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
+import type { Ticket } from "@/integrations/supabase/types";
 
 interface TicketListProps {
   initialFilter?: {
@@ -102,10 +103,10 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
   const stats = useMemo(() => {
     return {
       total: tickets.length,
-      open: tickets.filter((t: any) => t.status === 'open').length,
-      inProgress: tickets.filter((t: any) => t.status === 'in_progress').length,
-      resolved: tickets.filter((t: any) => t.status === 'resolved').length,
-      overdue: tickets.filter((t: any) => {
+      open: tickets.filter((t: Ticket) => t.status === 'open').length,
+      inProgress: tickets.filter((t: Ticket) => t.status === 'in_progress').length,
+      resolved: tickets.filter((t: Ticket) => t.status === 'resolved').length,
+      overdue: tickets.filter((t: Ticket) => {
         const daysOpen = Math.ceil((Date.now() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24));
         return daysOpen > 7 && t.status !== 'resolved' && t.status !== 'closed';
       }).length,
@@ -123,7 +124,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     }
   };
 
-  const filteredTickets = tickets.filter((ticket: any) =>
+  const filteredTickets = tickets.filter((ticket: Ticket) =>
     ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.client_display_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -147,17 +148,17 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
     if (selectedTicketIds.size === filteredTickets.length) {
       setSelectedTicketIds(new Set());
     } else {
-      setSelectedTicketIds(new Set(filteredTickets.map((t: any) => t.id)));
+      setSelectedTicketIds(new Set(filteredTickets.map((t: Ticket) => t.id)));
     }
   };
 
   const handleBulkInvoice = async () => {
     if (selectedTicketIds.size === 0) return;
     
-    const selectedTickets = tickets.filter((t: any) => selectedTicketIds.has(t.id));
+    const selectedTickets = tickets.filter((t: Ticket) => selectedTicketIds.has(t.id));
     
     // Verify all tickets belong to the same client
-    const clientIds = new Set(selectedTickets.map((t: any) => t.client_id));
+    const clientIds = new Set(selectedTickets.map((t: Ticket) => t.client_id));
     if (clientIds.size > 1) {
       showError("Bulk invoicing only works for tickets from the same client.");
       return;
@@ -186,7 +187,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
         recovery: 150
       };
 
-      const lineItems = selectedTickets.map((t: any) => {
+      const lineItems = selectedTickets.map((t: Ticket) => {
         const rate = tierRates[t.service_tier] || 130;
         const hours = t.actual_hours || 1;
         return {
@@ -218,7 +219,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
       if (error) throw error;
 
       // Link tickets to invoice
-      await Promise.all(selectedTickets.map((t: any) => 
+      await Promise.all(selectedTickets.map((t: Ticket) => 
         supabase.from('tickets').update({ related_invoice_id: invoice.id }).eq('id', t.id)
       ));
 
@@ -439,7 +440,7 @@ const TicketList = ({ initialFilter }: TicketListProps) => {
             </div>
           ) : (
             <div className={viewMode === 'grid' ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
-              {filteredTickets.map((ticket: any) => (
+              {filteredTickets.map((ticket: Ticket) => (
                 <TicketCard
                   key={ticket.id}
                   ticket={ticket}

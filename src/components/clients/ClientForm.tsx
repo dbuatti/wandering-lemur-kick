@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import type { Client } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2, UserPlus, ShieldCheck, Save } from "lucide-react";
@@ -30,7 +31,7 @@ const formSchema = z.object({
 
 interface ClientFormProps {
   onSuccess: () => void;
-  initialData?: any;
+  initialData?: Client;
 }
 
 const ClientForm = ({ onSuccess, initialData }: ClientFormProps) => {
@@ -71,7 +72,7 @@ const ClientForm = ({ onSuccess, initialData }: ClientFormProps) => {
       } else {
         const { error } = await supabase
           .from('clients')
-          .insert([{ ...values, owner_user_id: user?.id }]);
+          .insert([{ ...values, display_name: values.display_name as string, owner_user_id: user?.id }]);
 
         if (error) throw error;
         showSuccess("Client added successfully");

@@ -31,10 +31,11 @@ import InvoiceStatusBadge from "@/components/invoices/InvoiceStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
+import type { Invoice } from "@/integrations/supabase/types";
 
 const Invoices = () => {
   const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);

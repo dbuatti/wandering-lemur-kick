@@ -13,9 +13,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import TicketForm from "@/components/ticketing/TicketForm";
+import type { Client } from "@/integrations/supabase/types";
 
 interface ClientCardProps {
-  client: any;
+  client: Client;
 }
 
 const ClientCard = ({ client }: ClientCardProps) => {

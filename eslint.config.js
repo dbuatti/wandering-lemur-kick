@@ -25,8 +25,6 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
-      // Supabase rows are untyped until generated DB types are added
-      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
 );

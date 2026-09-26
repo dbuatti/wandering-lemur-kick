@@ -14,9 +14,10 @@ import {
 import ClientCard from "./ClientCard";
 import ClientForm from "./ClientForm";
 import { supabase } from "@/integrations/supabase/client";
+import type { Client } from "@/integrations/supabase/types";
 
 const ClientList = () => {
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

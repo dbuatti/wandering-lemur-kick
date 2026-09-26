@@ -7,9 +7,15 @@ import ServiceTiers from "@/components/ServiceTiers";
 import FounderStatement from "@/components/FounderStatement";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
-import EnquiryForm from "@/components/EnquiryForm";
+import { lazy, Suspense } from "react";
+import { useNearViewport } from "@/hooks/use-near-viewport";
+
+// The form pulls in zod, react-hook-form and the Supabase call; load it after first paint
+const EnquiryForm = lazy(() => import("@/components/EnquiryForm"));
 
 const Index = () => {
+  const contact = useNearViewport<HTMLElement>();
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -33,7 +39,7 @@ const Index = () => {
         
         <FAQ />
         
-        <section id="contact" className="section-padding bg-black/50">
+        <section id="contact" ref={contact.ref} className="section-padding bg-black/50">
           <div className="container px-6 mx-auto">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
@@ -43,7 +49,13 @@ const Index = () => {
                 </p>
               </div>
               <div className="bg-white/5 p-8 lg:p-12 rounded-[3rem] border border-white/10 shadow-2xl">
-                <EnquiryForm />
+                {contact.isNear ? (
+                  <Suspense fallback={<div className="min-h-[480px]" aria-hidden="true" />}>
+                    <EnquiryForm />
+                  </Suspense>
+                ) : (
+                  <div className="min-h-[480px]" aria-hidden="true" />
+                )}
               </div>
             </div>
           </div>

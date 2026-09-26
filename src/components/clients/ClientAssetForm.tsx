@@ -24,6 +24,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2, Save, Laptop, Key, AppWindow, FileText, Link as LinkIcon, Smartphone } from "lucide-react";
+import type { ClientAsset, ClientAssetRecord, TablesInsert } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   asset_type: z.enum(['device', 'login', 'software', 'link', 'other', 'security_audit']),
@@ -41,14 +42,14 @@ const formSchema = z.object({
 interface ClientAssetFormProps {
   clientId: string;
   onSuccess: () => void;
-  initialData?: any;
+  initialData?: ClientAssetRecord;
   defaultType?: 'device' | 'login' | 'software' | 'link' | 'other';
   defaultDeviceId?: string;
 }
 
 const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaultDeviceId }: ClientAssetFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [devices, setDevices] = useState<any[]>([]);
+  const [devices, setDevices] = useState<Pick<ClientAsset, "id" | "name">[]>([]);
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -65,7 +66,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaul
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
-      asset_type: initialData.asset_type,
+      asset_type: initialData.asset_type as z.infer<typeof formSchema>["asset_type"],
       name: initialData.name,
       ...initialData.details
     } : {
@@ -90,7 +91,7 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaul
       const { data: { user } } = await supabase.auth.getUser();
       const { asset_type, name, ...details } = values;
       
-      const payload: any = {
+      const payload: TablesInsert<"client_assets"> = {
         client_id: clientId,
         owner_user_id: user?.id,
         asset_type,
@@ -114,9 +115,9 @@ const ClientAssetForm = ({ clientId, onSuccess, initialData, defaultType, defaul
 
       showSuccess(`Asset ${initialData ? 'updated' : 'added'} successfully`);
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving asset:", error);
-      if (error.code === '23505') {
+      if ((error as { code?: string }).code === '23505') {
         showError("An asset with this name and type already exists for this client.");
       } else {
         showError("Failed to save asset. Please try again.");

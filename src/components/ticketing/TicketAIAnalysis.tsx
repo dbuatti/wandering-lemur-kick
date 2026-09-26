@@ -16,15 +16,23 @@ import { showError, showSuccess } from "@/utils/toast";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import type { Ticket, TicketAIAnalysisRow } from "@/integrations/supabase/types";
+
+// Saved rows plus the extra fields the analyze-ticket function may return
+type AIAnalysis = Partial<TicketAIAnalysisRow> & {
+  suggestions?: string[];
+  reasoning?: string;
+  timestamp?: string;
+};
 
 interface TicketAIAnalysisProps {
-  ticket: any;
-  comments: any[];
+  ticket: Pick<Ticket, "id" | "title" | "description">;
+  comments: unknown[];
 }
 
 const TicketAIAnalysis = ({ ticket, comments }: TicketAIAnalysisProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [hasSavedAnalysis, setHasSavedAnalysis] = useState(false);
 

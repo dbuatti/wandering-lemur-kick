@@ -9,6 +9,17 @@ export default defineConfig(() => ({
     port: 8080,
   },
   plugins: [dyadComponentTagger(), react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Long-lived vendor chunks so app deploys don't bust library caches
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          supabase: ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

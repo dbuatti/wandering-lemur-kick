@@ -7,18 +7,24 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import PageLoader from '@/components/PageLoader';
+import { consumePostLoginRedirect, savePostLoginRedirect } from '@/lib/post-login-redirect';
 
 const Login = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/dashboard';
+  const fromLocation = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const from = fromLocation?.pathname ? `${fromLocation.pathname}${fromLocation.search ?? ''}` : '/dashboard';
 
   useEffect(() => {
     if (session) {
+      consumePostLoginRedirect();
       navigate(from, { replace: true });
+    } else if (!isLoading) {
+      // Survives the Google OAuth round-trip, which returns to /dashboard
+      savePostLoginRedirect(from);
     }
-  }, [session, navigate, from]);
+  }, [session, isLoading, navigate, from]);
 
   if (isLoading) {
     return <PageLoader label="Initializing..." />;

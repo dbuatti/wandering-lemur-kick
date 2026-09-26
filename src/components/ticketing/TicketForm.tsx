@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import ClientForm from "@/components/clients/ClientForm";
 import { cn } from "@/lib/utils";
+import type { Client, Ticket } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -60,14 +61,14 @@ const formSchema = z.object({
 interface TicketFormProps {
   onTicketCreated?: (ticketId: string) => void;
   initialClientId?: string;
-  initialData?: any;
+  initialData?: Partial<Ticket>;
 }
 
 const TicketForm = ({ onTicketCreated, initialClientId, initialData }: TicketFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
   const [ocrProcessingId, setOcrProcessingId] = useState<string | null>(null);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Pick<Client, "id" | "display_name" | "email" | "phone" | "type">[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [isCreateClientOpen, setIsCreateClientOpen] = useState(false);
   const [attachments, setAttachments] = useState<{file: File, id: string}[]>([]);
@@ -100,9 +101,9 @@ const TicketForm = ({ onTicketCreated, initialClientId, initialData }: TicketFor
     defaultValues: initialData ? {
       title: initialData.title || "",
       description: initialData.description || "",
-      priority: initialData.priority || "medium",
-      category: initialData.category || "other",
-      service_tier: initialData.service_tier || "optimization",
+      priority: (initialData.priority || "medium") as z.infer<typeof formSchema>["priority"],
+      category: (initialData.category || "other") as z.infer<typeof formSchema>["category"],
+      service_tier: (initialData.service_tier || "optimization") as z.infer<typeof formSchema>["service_tier"],
       client_id: initialData.client_id || "",
       estimated_hours: initialData.estimated_hours || 0,
       tags: initialData.tags ? initialData.tags.join(", ") : "",
