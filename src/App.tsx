@@ -1,32 +1,56 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
+import PageLoader from "./components/PageLoader";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import Tickets from "./pages/Tickets";
-import TicketDetail from "./pages/TicketDetail";
-import Clients from "./pages/Clients";
-import ClientDetail from "./pages/ClientDetail";
-import Invoices from "./pages/Invoices";
-import InvoiceDetail from "./pages/InvoiceDetail";
-import PublicInvoice from "./pages/PublicInvoice";
-import Settings from "./pages/Settings";
-import Login from "./pages/Login";
 
-const queryClient = new QueryClient();
+// Portal pages are split out so public visitors don't download the admin bundle
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Tickets = lazy(() => import("./pages/Tickets"));
+const TicketDetail = lazy(() => import("./pages/TicketDetail"));
+const Clients = lazy(() => import("./pages/Clients"));
+const ClientDetail = lazy(() => import("./pages/ClientDetail"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
+const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Login = lazy(() => import("./pages/Login"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
-  
-  if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center text-white">Loading...</div>;
-  if (!session) return <Navigate to="/login" />;
-  
+  const location = useLocation();
+
+  if (isLoading) return <PageLoader />;
+  if (!session) return <Navigate to="/login" replace state={{ from: location }} />;
+
   return <>{children}</>;
 };
+
+const protectedRoutes = [
+  { path: "/dashboard", element: <Dashboard /> },
+  { path: "/tickets", element: <Tickets /> },
+  { path: "/tickets/:id", element: <TicketDetail /> },
+  { path: "/clients", element: <Clients /> },
+  { path: "/clients/:id", element: <ClientDetail /> },
+  { path: "/invoices", element: <Invoices /> },
+  { path: "/invoices/:id", element: <InvoiceDetail /> },
+  { path: "/settings", element: <Settings /> },
+];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -35,76 +59,21 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/invoice/view/:id" element={<PublicInvoice />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/tickets" 
-              element={
-                <ProtectedRoute>
-                  <Tickets />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/tickets/:id" 
-              element={
-                <ProtectedRoute>
-                  <TicketDetail />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/clients" 
-              element={
-                <ProtectedRoute>
-                  <Clients />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/clients/:id" 
-              element={
-                <ProtectedRoute>
-                  <ClientDetail />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/invoices" 
-              element={
-                <ProtectedRoute>
-                  <Invoices />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/invoices/:id" 
-              element={
-                <ProtectedRoute>
-                  <InvoiceDetail />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/invoice/view/:id" element={<PublicInvoice />} />
+              {protectedRoutes.map(({ path, element }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={<ProtectedRoute>{element}</ProtectedRoute>}
+                />
+              ))}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
