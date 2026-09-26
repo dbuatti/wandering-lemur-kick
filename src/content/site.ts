@@ -10,7 +10,7 @@ export const site = {
     "Melbourne IT support for performers, directors, producers and arts companies. Apple setup, security audits, data recovery and on-site help from a Musical Director who speaks your language.",
   email: "Daniele.buatti@gmail.com",
   // Shown on the site and in structured data only when filled in, e.g. "+61 4xx xxx xxx"
-  phone: "+61 424 164 067",
+  phone: "+61 424 174 067",
   locality: "Melbourne",
   region: "VIC",
   country: "AU",
