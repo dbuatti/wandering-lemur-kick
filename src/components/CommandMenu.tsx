@@ -26,11 +26,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthProvider";
+import type { Client, Ticket as TicketRow } from "@/integrations/supabase/types";
 
 const CommandMenu = () => {
   const [open, setOpen] = useState(false);
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Pick<TicketRow, "id" | "title" | "ticket_number">[]>([]);
+  const [clients, setClients] = useState<Pick<Client, "id" | "display_name">[]>([]);
   const navigate = useNavigate();
   const { signOut } = useAuth();
 

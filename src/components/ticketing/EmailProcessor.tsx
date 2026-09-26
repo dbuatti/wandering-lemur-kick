@@ -27,6 +27,29 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Response shape from the process-email-chain edge function
+interface EmailSuggestion {
+  action: 'create' | 'update' | 'status_change';
+  ticket_id?: string | null;
+  ticket_number?: number | string | null;
+  ticket_title?: string | null;
+  new_status?: string | null;
+  content?: string;
+  suggested_ticket?: {
+    title: string;
+    description: string;
+    priority: string;
+    category: string;
+    client_id?: string;
+    client_name?: string;
+  };
+}
+
+interface EmailAnalysis {
+  reasoning?: string;
+  suggestions?: EmailSuggestion[];
+}
+
 interface EmailProcessorProps {
   onComplete: () => void;
 }
@@ -36,7 +59,7 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [applyingIds, setApplyingIds] = useState<Set<number>>(new Set());
   const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<EmailAnalysis | null>(null);
 
   const handleAnalyze = async () => {
     if (!emailText || emailText.length < 20) {
@@ -61,7 +84,7 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
     }
   };
 
-  const handleApplySuggestion = async (suggestion: any, index: number) => {
+  const handleApplySuggestion = async (suggestion: EmailSuggestion, index: number) => {
     setApplyingIds(prev => new Set(prev).add(index));
 
     try {
@@ -193,7 +216,7 @@ const EmailProcessor = ({ onComplete }: EmailProcessorProps) => {
               </div>
 
               <div className="space-y-4">
-                {analysis.suggestions?.map((suggestion: any, index: number) => {
+                {analysis.suggestions?.map((suggestion, index) => {
                   const isApplying = applyingIds.has(index);
                   const isDone = completedIds.has(index);
 

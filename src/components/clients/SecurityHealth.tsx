@@ -38,8 +38,9 @@ const SecurityHealth = ({ clientId }: SecurityHealthProps) => {
           .eq('name', 'Core Security Audit')
           .maybeSingle();
 
-        if (data?.details?.completedIds) {
-          setCompletedIds(data.details.completedIds);
+        const details = data?.details as { completedIds?: string[] } | null;
+        if (details?.completedIds) {
+          setCompletedIds(details.completedIds);
         }
       } catch (e) {
         console.error("Error fetching security audit:", e);

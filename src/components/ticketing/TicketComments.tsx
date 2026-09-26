@@ -21,15 +21,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/components/AuthProvider";
-import { cn } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
+import type { TicketComment } from "@/integrations/supabase/types";
 
 interface TicketCommentsProps {
   ticketId: string;
 }
 
+// Shape returned by the get-ticket-comments / add-ticket-comment functions
+export type CommentWithAuthor = TicketComment & {
+  attachments?: string[] | null;
+  user?: { email?: string | null } | null;
+};
+
 const TicketComments = ({ ticketId }: TicketCommentsProps) => {
   const { user } = useAuth();
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<CommentWithAuthor[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInternal, setIsInternal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,9 +142,9 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
         uploadedUrls.push(publicUrl);
       }
       return uploadedUrls;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading images:", error);
-      showError(error.message || "Failed to upload images");
+      showError(getErrorMessage(error, "Failed to upload images"));
       return [];
     } finally {
       setUploadingImages(false);
@@ -171,7 +178,10 @@ const TicketComments = ({ ticketId }: TicketCommentsProps) => {
 
       if (error) throw error;
 
-      const newComment = {
+      const newComment: CommentWithAuthor = {
+        ticket_id: ticketId,
+        user_id: user.id,
+        updated_at: null,
         id: data.comment_id,
         content: trimmedContent,
         user: {

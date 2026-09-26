@@ -16,13 +16,14 @@ import ClientAssetCard from "./ClientAssetCard";
 import ClientAssetForm from "./ClientAssetForm";
 import BulkAssetImport from "./BulkAssetImport";
 import { supabase } from "@/integrations/supabase/client";
+import type { ClientAssetRecord } from "@/integrations/supabase/types";
 
 interface ClientAssetListProps {
   clientId: string;
 }
 
 const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
-  const [assets, setAssets] = useState<any[]>([]);
+  const [assets, setAssets] = useState<ClientAssetRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -39,7 +40,7 @@ const ClientAssetList = ({ clientId }: ClientAssetListProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAssets(data || []);
+      setAssets((data || []) as ClientAssetRecord[]);
     } catch (error) {
       console.error("Error fetching assets:", error);
     } finally {

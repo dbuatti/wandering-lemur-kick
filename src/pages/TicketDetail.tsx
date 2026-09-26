@@ -1,7 +1,7 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import TicketComments from "@/components/ticketing/TicketComments";
+import TicketComments, { type CommentWithAuthor } from "@/components/ticketing/TicketComments";
 import TicketTimeLog from "@/components/ticketing/TicketTimeLog";
 import TicketAIAnalysis from "@/components/ticketing/TicketAIAnalysis";
 import TicketForm from "@/components/ticketing/TicketForm";
@@ -69,12 +69,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { Ticket } from "@/integrations/supabase/types";
 
 const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [ticket, setTicket] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [comments, setComments] = useState<CommentWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

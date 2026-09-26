@@ -41,13 +41,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { Client, InvoiceRecord, SettingsRecord } from "@/integrations/supabase/types";
 
 const InvoiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [invoice, setInvoice] = useState<any>(null);
-  const [settings, setSettings] = useState<any>(null);
-  const [client, setClient] = useState<any>(null);
+  const [invoice, setInvoice] = useState<InvoiceRecord | null>(null);
+  const [settings, setSettings] = useState<SettingsRecord | null>(null);
+  const [client, setClient] = useState<Pick<Client, "email"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -62,8 +63,8 @@ const InvoiceDetail = () => {
       ]);
 
       if (invoiceRes.error) throw invoiceRes.error;
-      setInvoice(invoiceRes.data);
-      setSettings(settingsRes.data);
+      setInvoice(invoiceRes.data as InvoiceRecord);
+      setSettings(settingsRes.data as SettingsRecord | null);
 
       // Fetch client email if not in invoice
       if (invoiceRes.data.client_id) {
@@ -266,7 +267,7 @@ const InvoiceDetail = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {invoice.line_items?.map((item: any, i: number) => (
+                        {invoice.line_items?.map((item, i) => (
                           <tr key={i}>
                             <td className="py-8 pr-8 font-medium leading-relaxed">{item.description}</td>
                             <td className="py-8 text-center text-slate-600">{item.quantity}</td>

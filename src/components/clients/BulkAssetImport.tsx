@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
-import { cn } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
+import type { ClientAssetRecord } from "@/integrations/supabase/types";
 
 interface BulkAssetImportProps {
   clientId: string;
@@ -27,7 +28,7 @@ const BulkAssetImport = ({ clientId, onSuccess }: BulkAssetImportProps) => {
   const [importText, setImportText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [extractedAssets, setExtractedAssets] = useState<any[]>([]);
+  const [extractedAssets, setExtractedAssets] = useState<Pick<ClientAssetRecord, "asset_type" | "name" | "details">[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAIImport = async (file: File) => {
@@ -108,8 +109,8 @@ const BulkAssetImport = ({ clientId, onSuccess }: BulkAssetImportProps) => {
 
       showSuccess(`Successfully imported ${assetsToInsert.length} assets`);
       onSuccess();
-    } catch (error: any) {
-      showError(error.message || "Import failed");
+    } catch (error) {
+      showError(getErrorMessage(error, "Import failed"));
     } finally {
       setIsProcessing(false);
     }

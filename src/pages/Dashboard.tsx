@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, type ComponentProps } from 'react';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DashboardStats from "@/components/dashboard/DashboardStats";
@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import type { Client, Ticket as TicketRow } from "@/integrations/supabase/types";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -29,10 +30,10 @@ const Dashboard = () => {
     totalHours: 0,
     resolvedTickets: 0
   });
-  const [activities, setActivities] = useState<any[]>([]);
-  const [myTickets, setMyTickets] = useState<any[]>([]);
-  const [recentClients, setRecentClients] = useState<any[]>([]);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [activities, setActivities] = useState<ComponentProps<typeof RecentActivity>["activities"]>([]);
+  const [myTickets, setMyTickets] = useState<TicketRow[]>([]);
+  const [recentClients, setRecentClients] = useState<Client[]>([]);
+  const [categoryData, setCategoryData] = useState<{ name: string; value: number }[]>([]);
 
   const updateGreeting = () => {
     const hour = new Date().getHours();
@@ -95,7 +96,7 @@ const Dashboard = () => {
 
       const formattedActivities = recentTickets?.map(t => ({
         id: t.id,
-        type: 'ticket',
+        type: 'ticket' as const,
         title: 'New Ticket Created',
         description: `${t.title} for ${t.client_display_name}`,
         timestamp: t.created_at,

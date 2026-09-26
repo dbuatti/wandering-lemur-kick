@@ -29,9 +29,10 @@ import {
 } from "@/components/ui/dialog";
 import ClientAssetForm from "./ClientAssetForm";
 import { cn } from "@/lib/utils";
+import type { ClientAssetRecord } from "@/integrations/supabase/types";
 
 interface ClientAssetCardProps {
-  asset: any;
+  asset: ClientAssetRecord;
   onUpdate: () => void;
   deviceName?: string;
 }

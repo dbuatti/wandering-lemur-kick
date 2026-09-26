@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Printer, Download, Clock, ShieldCheck, Mail, Phone, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import type { InvoiceRecord, SettingsRecord } from "@/integrations/supabase/types";
+import { getErrorMessage } from "@/lib/utils";
 
 const PublicInvoice = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   
-  const [invoice, setInvoice] = useState<any>(null);
-  const [settings, setSettings] = useState<any>(null);
+  const [invoice, setInvoice] = useState<InvoiceRecord | null>(null);
+  const [settings, setSettings] = useState<SettingsRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ const PublicInvoice = () => {
           throw new Error("Invoice not found or link expired.");
         }
 
-        setInvoice(invoiceData);
+        setInvoice(invoiceData as InvoiceRecord);
 
         const { data: settingsData } = await supabase
           .from('settings')
@@ -41,9 +43,9 @@ const PublicInvoice = () => {
           .eq('owner_user_id', invoiceData.owner_user_id)
           .maybeSingle();
 
-        setSettings(settingsData);
-      } catch (e: any) {
-        setError(e.message);
+        setSettings(settingsData as SettingsRecord | null);
+      } catch (e) {
+        setError(getErrorMessage(e));
       } finally {
         setIsLoading(false);
       }
@@ -165,7 +167,7 @@ const PublicInvoice = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {invoice.line_items?.map((item: any, i: number) => (
+                  {invoice.line_items?.map((item, i) => (
                     <tr key={i}>
                       <td className="py-8 pr-8 font-semibold text-slate-900 leading-relaxed">{item.description}</td>
                       <td className="py-8 text-center text-slate-600 font-medium">{item.quantity}</td>
